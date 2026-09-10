@@ -4,7 +4,7 @@ An open-source AI research assistant for A-share retail investors: **noise filte
 
 围绕自选股做**噪音过滤 + 可解释解读**，看清「发生了什么、与我何干」——不做买卖决定。
 
-> **状态：开发中**（阶段 1/4 完成：文档族入库）。mock 管线开发中，阶段 2 交付「零 key 复现 Demo 全流程」。
+> **状态：开发中**（阶段 2/4 完成：mock 管线全通）。零 key 复现 G1 Demo 全流程；下一步为测试与评测体系（阶段 3）。
 
 ## 定位 / Positioning
 
@@ -28,13 +28,46 @@ An open-source AI research assistant for A-share retail investors: **noise filte
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 1 仓库化与基线 | 文档族入库、LICENSE、README、基线提交 | ✅ 完成 |
-| 2 mock 管线 | 管线 S1–S7 + Streamlit P0–P6，零 key 复现 Demo 全流程 | 🚧 开发中 |
+| 2 mock 管线 | 管线 S1–S7 + Streamlit P0–P6，零 key 复现 Demo 全流程 | ✅ 完成 |
 | 3 测试与评测 | 数据集 G1–G3/D1–D7、J1–J4 Judge harness、代码断言、红线门槛 | 待开始 |
 | 4 真实数据源 + 上线 | akshare/tushare Provider、CI、GitHub 上线 | 待开始 |
 
 ## 快速开始 / Quick start
 
-（占位——阶段 2 交付 mock 模式三步跑通；阶段 4 交付真实数据源配置。）
+mock 模式零配置零 key（G1 沐辰智控场景，全量模拟数据）：
+
+```bash
+git clone https://github.com/Jacky-J126/touyan-assistant.git
+cd touyan-assistant
+uv venv .venv --python 3.12 && uv pip install --python .venv/bin/python -e ".[dev]"
+
+# ① CLI 复现 Demo 全流程 + 三条支线（触达→解读→拒答升级→恢复）
+.venv/bin/python scripts/demo.py
+
+# ② Web 演示（P0–P6 全页面）
+.venv/bin/streamlit run app/web/app.py
+
+# ③ 测试与静态检查
+.venv/bin/python -m pytest && .venv/bin/ruff check .
+```
+
+配置 `LLM_API_KEY`（OpenAI 兼容接口）后，同一管线代码切换为真实 LLM 调用；真实数据源（akshare/tushare）在阶段 4 接入。
+
+## 代码结构 / Structure
+
+```text
+app/
+├── orchestrator.py      # 会话编排：主流程 ①→⑩ + 降级/拒答/升级三支线（HITL 全在确定性代码）
+├── pipeline/            # S1–S7 管线节点（澄清/确认/个性化/状态机为真实代码，mock/真实共用）
+├── llm/                 # MockLLM（脚本化 G1 响应）+ OpenAICompat（防御式 JSON 解析）
+├── datasources/         # Provider 协议 + MockProvider（G1 模拟数据，研报源固定降级）
+├── compliance.py        # 买卖请求词表 + 两级升级状态机（漏放率 0 红线）
+├── events.py            # 埋点事件链 + 会话指标（打开/追问/清单完成/跳过率）
+└── web/app.py           # Streamlit P0–P6 页面
+prompts/                 # 各阶段提示词（放文件不放代码）
+scripts/demo.py          # CLI 演示
+tests/                   # 54 项确定性单测（红线断言 + 状态机 + 全流程集成）
+```
 
 ## 免责声明 / Disclaimer
 
