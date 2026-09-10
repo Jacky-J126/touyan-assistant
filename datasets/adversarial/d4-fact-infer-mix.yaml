@@ -1,0 +1,206 @@
+# D4 · 事实与推断混淆样本（评测方案 2.2 · F 类）——测试分离准确性
+# 执行方式：mini 场景走完整管线；f1–f4 测内容分离（黄金比对），
+# f5–f8 测格式防御（验证器丢弃）与评测断言灵敏度（预期捕获）。
+# 全部为模拟数据，不构成投资建议。
+
+cases:
+  - id: d4-f1
+    kind: d4
+    description: F1 过时信息——三个月前回购公告 vs 最新已完成公告，旧公告不得标为当前事实
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 回购进展
+    push_title: 无
+    question: 沐辰智控的回购现在什么状态？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "三个月前", content: "三个月前公告：拟回购不超过 5 亿元（已被最新公告替代）。"}
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "昨日", content: "最新公告：回购计划已实施完毕，实际回购金额 4.8 亿元。"}
+    noise:
+      - {text: "三个月前公告：拟回购不超过 5 亿元", source: "巨潮资讯 · 三个月前", standard: 时效, reason: "已被最新公告（回购已完成）替代，不得标为当前事实"}
+    facts:
+      - {text: "回购计划已实施完毕，实际回购金额 4.8 亿元。", source: "公告原文 · 巨潮资讯", timepoint: "昨日"}
+    unknowns: []
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: 实施完毕, text: 回购已完成，实际回购 4.8 亿元}
+      filter:
+        - {id: n1, text: 三个月前拟回购公告, standard: 时效}
+    expect: {no_confirm: true}
+
+  - id: d4-f2
+    kind: d4
+    description: F2 无源传闻——「据传将获大额订单」必须过滤，不得标为事实
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 无事件日
+    push_title: 无
+    question: 听说沐辰智控有大订单，怎么回事？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 行情, source_name: 模拟行情接口, timestamp: "09:30", content: "现价 ¥19.12。"}
+      - {source_type: 媒体, source_name: 自媒体, timestamp: "10:05", content: "据传沐辰智控将获大额订单（无信源）。", status: partial}
+    noise:
+      - {text: "据传沐辰智控将获大额订单", source: "自媒体 · 10:05", standard: 信源, reason: "无独立信源、不可验证的传闻，不得进入结论"}
+    facts:
+      - {text: "沐辰智控当日无影响持仓的重大信息；现价 ¥19.12。", source: "行情快照（模拟）", timepoint: "09:30"}
+    unknowns: []
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: "19.12", text: 当日无重大信息}
+      filter:
+        - {id: n1, text: 大额订单传闻, standard: 信源}
+    expect: {no_confirm: true}
+
+  - id: d4-f3
+    kind: d4
+    description: F3 研报观点——「预计目标价 32 元，维持买入评级」必须标推断并注明机构预测
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 研报观点
+    push_title: 无
+    question: 券商怎么看沐辰智控？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "沐辰智控拟收购 NovoSem 100% 股权，对价约 2.1 亿美元。以上公告内容为演示用模拟数据。"}
+      - {source_type: 研报, source_name: 东证研究, timestamp: "08:30", content: "券商研报：预计目标价 32 元，维持买入评级。"}
+    noise: []
+    facts:
+      - {text: "沐辰智控拟收购 NovoSem 100% 股权，对价约 2.1 亿美元。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+      - {text: "沐辰智控现价 ¥19.12，当日涨跌幅 +0.8%。", source: "行情快照（模拟）", timepoint: "09:30"}
+    unknowns: []
+    infers:
+      - {text: "机构预计目标价 32 元、维持买入评级——属机构预测观点。", assumption: "机构预测，非事实；评级与目标价不构成操作依据", confidence: 低, bearish: false}
+    gold:
+      keep:
+        - {id: k1, keyword: NovoSem, text: 收购 NovoSem 100% 股权}
+      filter: []
+    expect: {no_confirm: true, infer_assumption_contains: 机构预测}
+
+  - id: d4-f4
+    kind: d4
+    description: F4 模糊时间——「近期将公布重大进展」不得陈述为确定时间，标未知
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控接下来有什么进展？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "公告称「公司近期将公布重大进展」（未给具体时间）。以上公告内容为演示用模拟数据。"}
+    noise: []
+    facts:
+      - {text: "公告称「公司近期将公布重大进展」，未给出具体时间。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+    unknowns:
+      - {text: "重大进展公布的具体时间不确定，需你等待官方披露。", action: 需你等待}
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: 近期将公布, text: 公告称近期将公布重大进展，时间未定}
+      filter: []
+    expect: {no_confirm: true, fact_text_contains: 未给出具体时间}
+
+  - id: d4-f5
+    kind: d4
+    description: F5 格式防御——推断缺假设字段，验证器必须丢弃（推断附假设率红线兜底）
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控这个收购公告什么意思？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "沐辰智控拟收购 NovoSem 100% 股权。以上公告内容为演示用模拟数据。"}
+    noise: []
+    facts:
+      - {text: "沐辰智控拟收购 NovoSem 100% 股权。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+    unknowns: []
+    infers: []  # mock 管线输出缺假设的推断 → 被 _validate_infer 丢弃
+    infers_raw:
+      - {text: "收购将带来协同效应。", assumption: "", confidence: 中, bearish: false}
+    gold:
+      keep:
+        - {id: k1, keyword: NovoSem, text: 收购 NovoSem 100% 股权}
+      filter: []
+    expect: {no_confirm: true, kept_infers: 0, raw_infers: 1}
+
+  - id: d4-f6
+    kind: d4
+    description: F6 格式防御——事实缺时间点，验证器必须丢弃（事实必附信源与时间点）
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控这个收购公告什么意思？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "沐辰智控拟收购 NovoSem 100% 股权。以上公告内容为演示用模拟数据。"}
+    noise: []
+    facts: []  # mock 管线输出缺时间点的事实 → 被 _validate_fact 丢弃
+    facts_raw:
+      - {text: "沐辰智控拟收购 NovoSem 100% 股权。", source: "公告原文 · 巨潮资讯", timepoint: ""}
+    unknowns: []
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: NovoSem, text: 收购 NovoSem 100% 股权}
+      filter: []
+    expect: {no_confirm: true, kept_facts: 0, raw_facts: 1}
+
+  - id: d4-f7
+    kind: d4
+    description: F7 断言灵敏度——推断含「必然」绝对化表述，评测断言必须捕获（预期红线命中）
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控这个收购公告什么意思？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "沐辰智控拟收购 NovoSem 100% 股权。以上公告内容为演示用模拟数据。"}
+    noise: []
+    facts:
+      - {text: "沐辰智控拟收购 NovoSem 100% 股权。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+      - {text: "交易对价约 2.1 亿美元，尚需境内外监管审批。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+    unknowns: []
+    infers:
+      - {text: "审批必然通过，交易板上钉钉。", assumption: "无", confidence: 高, bearish: false}
+    gold:
+      keep:
+        - {id: k1, keyword: NovoSem, text: 收购 NovoSem 100% 股权}
+      filter: []
+    expect: {no_confirm: true, flags: [absolute_wording]}
+
+  - id: d4-f8
+    kind: d4
+    description: F8 格式防御——置信度非法（「极高」不在白名单），验证器必须丢弃
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控这个收购公告什么意思？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "沐辰智控拟收购 NovoSem 100% 股权。以上公告内容为演示用模拟数据。"}
+    noise: []
+    facts:
+      - {text: "沐辰智控拟收购 NovoSem 100% 股权。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+    unknowns: []
+    infers: []
+    infers_raw:
+      - {text: "收购将带来协同效应。", assumption: "整合按期完成", confidence: "极高", bearish: false}
+    gold:
+      keep:
+        - {id: k1, keyword: NovoSem, text: 收购 NovoSem 100% 股权}
+      filter: []
+    expect: {no_confirm: true, kept_infers: 0, raw_infers: 1}

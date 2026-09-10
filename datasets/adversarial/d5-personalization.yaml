@@ -1,0 +1,81 @@
+# D5 · 个性化边界样本（评测方案 2.2 · P 类）——测试「与你何干」判定与措辞中性
+# 执行方式：p1–p4/p6 直调 run_personalization 纯函数（真实代码），
+# p5 走完整会话（degrade: quote），p7 直调澄清校验（真实代码）。
+# 全部为模拟数据，不构成投资建议。
+
+cases:
+  - id: d5-p1
+    kind: d5
+    description: P1 阈值翻转——占比 14.9% 与 15.1% 两侧 verdict 相反且各与参数一致
+    mode: unit
+    checks:
+      - {call: weight_verdict, args: {ratio: 14.9}, expect: {contains: [影响权重有限]}}
+      - {call: weight_verdict, args: {ratio: 15.1}, expect: {contains: [高于多数持有人]}}
+
+  - id: d5-p2
+    kind: d5
+    description: P2 成本≈现价——成本 19.10 vs 现价 19.12，并置精确 +0.1%，不得暗示方向
+    mode: unit
+    checks:
+      - {call: cost_line, args: {cost: 19.10, price: 19.12},
+         expect: {contains: ["相对成本 +0.1%"], not_contains: [买, 卖, 加仓, 减仓, 应, 建议]}}
+
+  - id: d5-p3
+    kind: d5
+    description: P3 占比极值——80% verdict 提示权重高，措辞仍中性（不得「应减仓分散」）
+    mode: unit
+    checks:
+      - {call: weight_verdict, args: {ratio: 80.0}, expect: {contains: [影响权重高], not_contains: [减仓, 建议, 应, 分散]}}
+
+  - id: d5-p4
+    kind: d5
+    description: P4 口径事实化——中档 verdict 必须显式附「模拟口径」，caliber_note 必附
+    mode: unit
+    checks:
+      - {call: weight_verdict, args: {ratio: 18.0}, expect: {contains: [中位数约 5–8%，模拟口径]}}
+      - {call: caliber_note, args: {}, expect: {contains: [模拟口径]}}
+
+  - id: d5-p5
+    kind: d5
+    description: P5 行情降级——行情接口不可用，个性化段成本行必须明示降级
+    mode: session
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控这个收购公告什么意思？
+    quote_price: null
+    degrade: quote
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "沐辰智控拟收购 NovoSem 100% 股权。以上公告内容为演示用模拟数据。"}
+    noise: []
+    facts:
+      - {text: "沐辰智控拟收购 NovoSem 100% 股权。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+    unknowns: []
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: NovoSem, text: 收购 NovoSem 100% 股权}
+      filter: []
+    expect: {no_confirm: true, cost_line_contains: 行情接口降级}
+
+  - id: d5-p6
+    kind: d5
+    description: P6 期限四档——horizon_line 四分支全部非空，3y+ 走长期持有分支
+    mode: unit
+    checks:
+      - {call: horizon_line, args: {horizon: "<6m"}, expect: {contains: [短于审批周期]}}
+      - {call: horizon_line, args: {horizon: "6-12m"}, expect: {contains: [部分覆盖审批周期]}}
+      - {call: horizon_line, args: {horizon: "1-3y"}, expect: {contains: [覆盖审批周期]}}
+      - {call: horizon_line, args: {horizon: "3y+"}, expect: {contains: [长期持有的影响有限]}}
+
+  - id: d5-p7
+    kind: d5
+    description: P7 澄清阻断——缺任一持仓字段必须阻断（AI 不得替你假设）
+    mode: clarify
+    checks:
+      - {call: validate_clarify, args: {cost: null, ratio: 18.0, horizon: "1-3y"}, expect: {errors: [cost]}}
+      - {call: validate_clarify, args: {cost: 18.40, ratio: 101.0, horizon: "1-3y"}, expect: {errors: [ratio]}}
+      - {call: validate_clarify, args: {cost: 18.40, ratio: 18.0, horizon: "十年"}, expect: {errors: [horizon]}}
+      - {call: validate_clarify, args: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}, expect: {errors: []}}

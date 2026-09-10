@@ -1,0 +1,194 @@
+# D1 · 噪音干扰样本（评测方案 2.2 · N 类）——测试过度过滤 vs 误收
+# 执行方式：mini 场景走完整管线（意图→澄清→召回→噪音过滤→事实/推断→确认→结论），
+# 黄金 keep/filter 与 G 集同一机制比对；每条的暴露风险对应断言。
+# 全部为模拟数据，不构成投资建议。
+
+cases:
+  - id: d1-n1
+    kind: d1
+    description: N1 无关热门——标的当日无事件，板块大涨与私募爆雷传闻霸屏，不得混入标的解读
+    stock: 澄海物流
+    code: "603871.SH"
+    event: 无事件日
+    push_title: 无（当日无标的重大信息）
+    question: 今天有什么影响我持仓的消息？
+    quote_price: 9.84
+    holdings: {cost: 9.60, ratio: 5.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 行情, source_name: 模拟行情接口, timestamp: "09:30", content: "现价 ¥9.84，当日涨跌幅 -0.2%。"}
+      - {source_type: 媒体, source_name: 财经媒体, timestamp: "10:15", content: "半导体设备板块因海外政策大涨，多股涨停。", status: partial}
+      - {source_type: 媒体, source_name: 财经媒体, timestamp: "11:20", content: "网传某百亿私募爆雷，涉及多家上市公司。", status: partial}
+      - {source_type: 股吧, source_name: 股吧 / 社区讨论, timestamp: "12:05", content: "股吧讨论 9 条 · 7 条待过滤", status: partial}
+    noise:
+      - {text: "半导体设备板块因海外政策大涨，多股涨停。", source: "财经媒体 · 10:15", standard: 相关性, reason: "板块情绪与标的无直接关联，无信息增量"}
+      - {text: "网传某百亿私募爆雷，涉及多家上市公司。", source: "财经媒体 · 11:20", standard: 信源, reason: "未经证实的传闻，无官方信源"}
+      - {text: "「澄海物流被资金盯上了，要拉升」", source: "股吧热帖 · 12:05", standard: 信源, reason: "情绪帖无信源，无可交叉验证"}
+    facts:
+      - {text: "澄海物流当日无影响持仓的重大信息；现价 ¥9.84，涨跌幅 -0.2%。", source: "行情快照（模拟）", timepoint: "09:30"}
+    unknowns: []
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: "9.84", text: 当日无重大信息，现价 ¥9.84}
+      filter:
+        - {id: n1, text: 半导体设备板块大涨, standard: 相关性}
+        - {id: n2, text: 私募爆雷传闻, standard: 信源}
+        - {id: n3, text: 资金拉升情绪帖, standard: 信源}
+    expect: {no_confirm: true}
+
+  - id: d1-n2
+    kind: d1
+    description: N2 相关但平淡——运价指数周报小幅 +2%，弱相关，应保留为低优先级事实
+    stock: 澄海物流
+    code: "603871.SH"
+    event: 运价指数周报
+    push_title: 港口航运运价指数周报更新
+    question: 这条运价消息对我持仓有什么影响？
+    quote_price: 9.84
+    holdings: {cost: 9.60, ratio: 5.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 媒体, source_name: 行业资讯, timestamp: "08:40", content: "本周港口航运运价指数小幅上涨 2%，与澄海物流弱相关。", status: partial}
+      - {source_type: 行情, source_name: 模拟行情接口, timestamp: "09:30", content: "现价 ¥9.84，当日涨跌幅 +0.4%。"}
+    noise: []
+    facts:
+      - {text: "本周港口航运运价指数小幅上涨 2%，与澄海物流弱相关。", source: "行业资讯 · 08:40", timepoint: "08:40"}
+    unknowns: []
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: 运价指数, text: 运价指数周报小幅上涨 2%，弱相关}
+      filter: []
+    expect: {no_confirm: true}
+
+  - id: d1-n3
+    kind: d1
+    description: N3 同名情绪帖——提及标的、无信源、高热度，必须过滤并附理由
+    stock: 澄海物流
+    code: "603871.SH"
+    event: 无事件日
+    push_title: 无（当日无标的重大信息）
+    question: 澄海物流今天有什么消息？
+    quote_price: 9.84
+    holdings: {cost: 9.60, ratio: 5.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 行情, source_name: 模拟行情接口, timestamp: "09:30", content: "现价 ¥9.84，当日涨跌幅 +0.1%。"}
+      - {source_type: 股吧, source_name: 股吧 / 社区讨论, timestamp: "11:10", content: "股吧热帖「澄海物流主力资金连续流入，速看」热度极高。", status: partial}
+    noise:
+      - {text: "「澄海物流主力资金连续流入，速看」", source: "股吧热帖 · 11:10", standard: 信源, reason: "提及标的但无信源；热度不构成可信度，情绪帖默认判噪音"}
+    facts:
+      - {text: "澄海物流当日无影响持仓的重大信息；现价 ¥9.84。", source: "行情快照（模拟）", timepoint: "09:30"}
+    unknowns: []
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: "9.84", text: 当日无重大信息}
+      filter:
+        - {id: n1, text: 主力资金连续流入速看, standard: 信源}
+    expect: {no_confirm: true}
+
+  - id: d1-n4
+    kind: d1
+    description: N4 社媒可交叉验证——股吧帖准确引用公告原文，保留事实部分、解读部分过滤
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 沐辰智控发布重大公告：拟收购海外半导体设备资产
+    question: 股吧里说的收购怎么回事？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "沐辰智控拟收购 NovoSem Pte. Ltd. 100% 股权，交易对价约 2.1 亿美元（约合人民币 15.2 亿元），构成重大资产重组，尚需股东大会及境内外监管审批。以上公告内容为演示用模拟数据。"}
+      - {source_type: 股吧, source_name: 股吧 / 社区讨论, timestamp: "02:10", content: "股吧帖准确引用公告原文并附个人解读「新业务很性感，未来不可限量」。", status: partial}
+    noise:
+      - {text: "「新业务很性感，未来不可限量」", source: "股吧回帖 · 02:10", standard: 信源, reason: "个人解读无信源；其引用的事实部分与公告交叉验证一致，已按例外条款保留在事实层"}
+    facts:
+      - {text: "沐辰智控拟收购 NovoSem 100% 股权，对价约 2.1 亿美元（约合人民币 15.2 亿元），构成重大资产重组。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+    unknowns:
+      - {text: "现金 / 股份支付比例尚未披露。", action: 需你补充}
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: NovoSem, text: 收购 NovoSem 100% 股权与对价}
+      filter:
+        - {id: n1, text: 未来不可限量解读, standard: 信源}
+    expect: {no_confirm: true}
+
+  - id: d1-n5
+    kind: d1
+    description: N5 过时但未被推翻——三个月前运价数据无更新版本，保留但必须标时点并提示时效
+    stock: 澄海物流
+    code: "603871.SH"
+    event: 行业数据查询
+    push_title: 无
+    question: 现在运价数据是多少？
+    quote_price: 9.84
+    holdings: {cost: 9.60, ratio: 5.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 媒体, source_name: 行业数据库, timestamp: "三个月前", content: "行业运价数据最新版本为三个月前：综合运价指数 1280 点（此后无更新版本）。", status: partial}
+      - {source_type: 行情, source_name: 模拟行情接口, timestamp: "09:30", content: "现价 ¥9.84。"}
+    noise: []
+    facts:
+      - {text: "行业运价数据最新版本为三个月前（综合运价指数 1280 点，此后无更新），不构成当前事实。", source: "行业数据库 · 三个月前", timepoint: "三个月前"}
+    unknowns:
+      - {text: "三个月前的运价数据之后是否有更新，需你等待数据源刷新。", action: 需你等待}
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: 三个月前, text: 数据为三个月前版本且已标时点}
+      filter: []
+    expect: {no_confirm: true, fact_text_contains: 三个月前}
+
+  - id: d1-n6
+    kind: d1
+    description: N1 变体——无关热门 + 情绪帖混合洪水，全部隔离在噪音面板
+    stock: 澄海物流
+    code: "603871.SH"
+    event: 无事件日
+    push_title: 无（当日无标的重大信息）
+    question: 今天有什么影响我持仓的消息？
+    quote_price: 9.84
+    holdings: {cost: 9.60, ratio: 5.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 行情, source_name: 模拟行情接口, timestamp: "09:30", content: "现价 ¥9.84，当日涨跌幅 +0.3%。"}
+      - {source_type: 媒体, source_name: 财经媒体, timestamp: "13:40", content: "「物流板块明天要起飞？机构集体看好」", status: partial}
+      - {source_type: 股吧, source_name: 股吧 / 社区讨论, timestamp: "14:00", content: "股吧讨论 14 条 · 12 条待过滤", status: partial}
+    noise:
+      - {text: "「物流板块明天要起飞？机构集体看好」", source: "财经媒体 · 13:40", standard: 信源, reason: "标题党，机构集体看好无具体信源"}
+      - {text: "「澄海物流内幕：并购传闻已坐实」", source: "股吧热帖 · 14:00", standard: 信源, reason: "匿名内幕帖不可查证"}
+    facts:
+      - {text: "澄海物流当日无影响持仓的重大信息；现价 ¥9.84。", source: "行情快照（模拟）", timepoint: "09:30"}
+    unknowns: []
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: "9.84", text: 当日无重大信息}
+      filter:
+        - {id: n1, text: 物流板块起飞, standard: 信源}
+        - {id: n2, text: 并购传闻内幕帖, standard: 信源}
+    expect: {no_confirm: true}
+
+  - id: d1-n7
+    kind: d1
+    description: N3 变体——情绪帖带「内部人」「消息可靠」伪装措辞，仍按信源标准过滤
+    stock: 澄海物流
+    code: "603871.SH"
+    event: 无事件日
+    push_title: 无（当日无标的重大信息）
+    question: 澄海物流今天有什么消息？
+    quote_price: 9.84
+    holdings: {cost: 9.60, ratio: 5.0, horizon: "1-3y"}
+    recall:
+      - {source_type: 行情, source_name: 模拟行情接口, timestamp: "09:30", content: "现价 ¥9.84，当日涨跌幅 -0.1%。"}
+      - {source_type: 股吧, source_name: 股吧 / 社区讨论, timestamp: "15:20", content: "股吧帖「内部人消息可靠：下周有大事，懂的都懂」高热度。", status: partial}
+    noise:
+      - {text: "「内部人消息可靠：下周有大事，懂的都懂」", source: "股吧热帖 · 15:20", standard: 信源, reason: "匿名内部人表述不可查证，伪装措辞不改变信源判定"}
+    facts:
+      - {text: "澄海物流当日无影响持仓的重大信息；现价 ¥9.84。", source: "行情快照（模拟）", timepoint: "09:30"}
+    unknowns: []
+    infers: []
+    gold:
+      keep:
+        - {id: k1, keyword: "9.84", text: 当日无重大信息}
+      filter:
+        - {id: n1, text: 内部人消息可靠, standard: 信源}
+    expect: {no_confirm: true}

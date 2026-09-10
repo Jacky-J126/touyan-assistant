@@ -1,0 +1,189 @@
+# G2 · 业绩预告：澜舟生物年度业绩预增（评测方案 2.1 场景 B）
+# 特征：低推断密度（2/7 < 0.4）且无涉利空推断 → 不弹确认（H1 全链路对照）；
+# 事实含「非经常性损益贡献大头、扣非微增」→ 关键信息「扣非」必须进入保留层。
+# 全部为模拟数据，不构成投资建议。
+
+stock: 澜舟生物
+code: "301076.SZ"
+event: 年度业绩预告
+push_title: 澜舟生物发布年度业绩预告
+question: 业绩这么好，对我的持仓意味着什么？
+confirm_expected: false     # 推断 2/7 ≈ 0.286 < 0.4 且无利空 → 不弹（H1）
+degrade: research           # 研报接口固定超时（S2 降级）
+quote_price: 26.55
+noise_summary: 股吧 12 条 · 9 条待过滤
+
+recall:
+  - source_type: 公告
+    source_name: 巨潮资讯
+    timestamp: "17:32"
+    content: "澜舟生物股份有限公司发布 2026 年度业绩预告：预计实现归属于上市公司股东的净利润同比增长 {increase}。业绩增长的主要来源：一是报告期内获得政府补助约 1.2 亿元；二是处置长期股权投资产生的收益约 0.8 亿元。剔除上述非经常性损益后，扣除非经常性损益的净利润同比小幅增长约 3%。本业绩预告为初步测算结果，未经审计，最终数据以审计报告为准。以上公告内容为演示用模拟数据。"
+  - source_type: 交易所披露
+    source_name: 深交所
+    timestamp: "17:32"
+    content: 业绩预告已在深交所信息披露平台同步披露。
+  - source_type: 行情
+    source_name: 模拟行情接口
+    timestamp: "09:15"
+    content: "预告后首个交易日集合竞价{quote_move}。现价 ¥{quote_price}。"
+  - source_type: 媒体
+    source_name: 财经媒体
+    timestamp: "20:05"
+    content: 媒体报道 2 篇 · 均为通稿
+    status: partial
+  - source_type: 股吧
+    source_name: 股吧 / 社区讨论
+    timestamp: "21:40"
+    content: 股吧讨论 12 条 · 9 条待过滤
+    status: partial
+  - source_type: 研报
+    source_name: 东海研究
+    timestamp: 请求超时
+    content: 券商研报接口请求超时
+    status: degraded
+
+noise:
+  - text: 「涨停潮来了！明天满仓干」
+    source: 股吧热帖 · 21:40
+    standard: 信源
+    reason: 情绪化喊单无新增事实；社交平台默认判噪音，无可交叉验证的信源
+  - text: 「业绩爆表，明日一字板没悬念」
+    source: 财经号通稿 · 20:05
+    standard: 信源
+    reason: 标题党；对涨跌幅的断言无依据，改写公告原文无信息增量
+  - text: 「半年前旧闻：澜舟生物研发管线获海外授权」
+    source: 财经社区转载 · 半年前
+    standard: 时效
+    reason: 引用过期信息，与本次业绩预告无时间关联
+
+facts:
+  - text: "澜舟生物预计 2026 年度归母净利润同比增长 {increase}。"
+    source: 业绩预告原文 · 巨潮资讯
+    timepoint: "17:32"
+  - text: "业绩增长主要来自政府补助约 1.2 亿元与处置股权收益约 0.8 亿元，均为非经常性损益。"
+    source: 业绩预告原文 · 巨潮资讯
+    timepoint: "17:32"
+  - text: "剔除上述非经常性损益后，扣非净利润同比小幅增长约 3%。"
+    source: 业绩预告原文 · 巨潮资讯
+    timepoint: "17:32"
+  - text: "本次业绩预告为初步测算，未经审计，最终以审计报告为准。"
+    source: 业绩预告原文 · 巨潮资讯
+    timepoint: "17:32"
+  - text: "预告于 17:32 在深交所信息披露平台同步披露。"
+    source: 交易所披露 · 深交所
+    timepoint: "17:32"
+
+unknowns:
+  - text: 政府补助未来年度的可持续性无法判断。
+    action: 需你等待
+  - text: 一季度主营业务经营数据尚未披露。
+    action: 需你等待
+
+infers:
+  - text: 市场可能对「高增长」过度反应，而经营性改善有限（扣非仅微增）。
+    assumption: 无其他大额非经常性损益被遗漏
+    confidence: 中
+    bearish: false
+  - text: 预增落地后短期波动可能放大。
+    assumption: 情绪主导短期定价，无新增重大消息
+    confidence: 低–中
+    bearish: false
+
+gold:
+  keep:
+    - {id: k1, keyword: "{increase}", text: "2026 年度归母净利润预增 {increase}"}
+    - {id: k2, keyword: 政府补助, text: "补助 1.2 亿 + 处置收益 0.8 亿为非经常性损益"}
+    - {id: k3, keyword: 扣非, text: 扣非净利润同比仅微增约 3%}
+    - {id: k4, keyword: 初步测算, text: 业绩预告为初步测算，未经审计}
+    - {id: k5, keyword: 深交所, text: 17:32 深交所信息披露平台同步披露}
+  filter:
+    - {id: n1, text: 「涨停潮满仓干」喊单, standard: 信源}
+    - {id: n2, text: 「一字板没悬念」通稿, standard: 信源}
+    - {id: n3, text: 半年前授权旧闻, standard: 时效}
+
+holdings_variants:
+  - {id: h08, cost: 24.10, ratio: 8.0, horizon: "6-12m", verdict: 有限, contains: 影响权重有限}
+  - {id: h04, cost: 24.10, ratio: 4.0, horizon: "<6m", verdict: 有限, contains: 影响权重有限}
+  - {id: h50, cost: 24.10, ratio: 50.0, horizon: "1-3y", verdict: 高, contains: 影响权重高}
+
+variants:
+  - id: G2-v01
+    note: 基准
+    params:
+      increase: 80%–100%
+      quote_move: 上涨 3.1%
+      quote_price: "26.55"
+  - id: G2-v02
+    note: 预增区间下修
+    params:
+      increase: 50%–70%
+      quote_move: 上涨 1.9%
+      quote_price: "26.55"
+  - id: G2-v03
+    note: 行情高开回落
+    params:
+      increase: 80%–100%
+      quote_move: 上涨 0.4%
+      quote_price: "26.10"
+  - id: G2-v04
+    note: 噪音池 +1（游资席位传闻）
+    add_noise:
+      - text: 「龙虎榜游资进场，明天拉板」
+        source: 股吧热帖 · 22:10
+        standard: 信源
+        reason: 无信源断言资金行为，属可过滤噪音
+    params:
+      increase: 80%–100%
+      quote_move: 上涨 3.1%
+      quote_price: "26.55"
+  - id: G2-v05
+    note: 噪音池 -1（旧闻噪音缺席）
+    drop_noise: [「半年前旧闻：澜舟生物研发管线获海外授权」]
+    params:
+      increase: 80%–100%
+      quote_move: 上涨 3.1%
+      quote_price: "26.55"
+  - id: G2-v06
+    note: 补助金额变更（事件细节变体）
+    params:
+      increase: 80%–100%
+      quote_move: 上涨 3.1%
+      quote_price: "26.55"
+    recall_delta:
+      - source_type: 公告
+        source_name: 巨潮资讯
+        content: "澜舟生物股份有限公司发布 2026 年度业绩预告：预计实现归属于上市公司股东的净利润同比增长 {increase}。业绩增长的主要来源：一是报告期内获得政府补助约 0.9 亿元；二是处置长期股权投资产生的收益约 1.1 亿元。剔除上述非经常性损益后，扣除非经常性损益的净利润同比小幅增长约 5%。本业绩预告为初步测算结果，未经审计，最终数据以审计报告为准。以上公告内容为演示用模拟数据。"
+  - id: G2-v07
+    note: 无利好兑现（行情走弱）
+    params:
+      increase: 80%–100%
+      quote_move: 下跌 1.2%
+      quote_price: "26.00"
+  - id: G2-v08
+    note: 噪音池 +1（利好出尽论）
+    add_noise:
+      - text: 「利好出尽就是利空，赶紧走」
+        source: 财经短视频文案 · 22:30
+        standard: 信源
+        reason: 情绪化断言无依据，可过滤
+    params:
+      increase: 80%–100%
+      quote_move: 上涨 3.1%
+      quote_price: "26.55"
+  - id: G2-v09
+    note: 股吧讨论量激增（摘要变化）
+    params:
+      increase: 80%–100%
+      quote_move: 上涨 3.1%
+      quote_price: "26.55"
+  - id: G2-v10
+    note: 综合变体（区间+噪音+行情）
+    params:
+      increase: 120%–140%
+      quote_move: 上涨 7.2%
+      quote_price: "27.90"
+    add_noise:
+      - text: 「这种业绩不涨天理难容」
+        source: 股吧热帖 · 21:55
+        standard: 信源
+        reason: 情绪煽动无新增事实

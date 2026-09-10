@@ -1,0 +1,194 @@
+# G3 · 监管问询：澄海物流收到年报问询函（评测方案 2.1 场景 C）
+# 特征：推断含利空（涉利空必弹确认，推断占比 2/6 < 0.4）→ 弹确认（H3 利空支线）；
+# 事实层必须保留「日常监管行为、非处罚」——监管事件的定性口径不能因情绪噪音丢失。
+# 全部为模拟数据，不构成投资建议。
+
+stock: 澄海物流
+code: "603871.SH"
+event: 年报问询函
+push_title: 澄海物流收到交易所年报问询函
+question: 这对我持仓意味着什么？
+confirm_expected: true      # 涉利空推断 → 必弹（H3 利空支线）
+degrade: research           # 研报接口固定超时（S2 降级）
+quote_price: 9.84
+noise_summary: 股吧 16 条 · 13 条待过滤
+
+recall:
+  - source_type: 公告
+    source_name: 巨潮资讯
+    timestamp: "16:20"
+    content: "澄海物流股份有限公司于 2026 年 9 月 9 日收到上海证券交易所下发的《关于澄海物流股份有限公司 2025 年年度报告的信息披露监管问询函》。问询函主要关注：一是应收账款余额与账龄结构的真实性及坏账计提的充分性；二是商誉减值计提的充分性。公司须在收到问询函后 {reply_days} 内予以回复并履行信息披露义务。截至公告披露日，公司尚未回复。公司收到年报问询函属于日常监管行为，并非处罚，亦不构成任何重大违法违规事项。以上公告内容为演示用模拟数据。"
+  - source_type: 交易所披露
+    source_name: 上交所
+    timestamp: "16:20"
+    content: 问询函已在上交所网站公开披露。
+  - source_type: 行情
+    source_name: 模拟行情接口
+    timestamp: "09:15"
+    content: "问询函披露后首个交易日集合竞价{quote_move}。现价 ¥{quote_price}。"
+  - source_type: 媒体
+    source_name: 自媒体视频
+    timestamp: "19:30"
+    content: 财经大V 视频文案 2 篇 · 含「深度解读：这家公司完了」标题党
+    status: partial
+  - source_type: 股吧
+    source_name: 股吧 / 社区讨论
+    timestamp: "20:10"
+    content: 股吧讨论 16 条 · 13 条待过滤
+    status: partial
+  - source_type: 研报
+    source_name: 长信研究
+    timestamp: 请求超时
+    content: 券商研报接口请求超时
+    status: degraded
+
+noise:
+  - text: 「要暴雷了，快跑！」
+    source: 股吧热帖 · 20:10
+    standard: 信源
+    reason: 情绪化断言无新增事实；社交平台默认判噪音，无可交叉验证的信源
+  - text: 「退市倒计时开始了」
+    source: 股吧热帖 · 20:25
+    standard: 信源
+    reason: 问询函不等于退市流程，断言无依据
+  - text: 「内部消息：审计师已经离任」
+    source: 匿名投稿 · 21:00
+    standard: 信源
+    reason: 匿名信源不可查证，与问询函无直接关联
+  - text: 「三年前的处罚旧闻又被翻出来」
+    source: 财经社区转载 · 三年前
+    standard: 时效
+    reason: 引用过期信息，与本次问询函无时间关联
+
+facts:
+  - text: "公司于 2026-09-09 收到上交所年报信息披露监管问询函，关注应收账款真实性、坏账计提充分性与商誉减值计提充分性。"
+    source: 公告原文 · 巨潮资讯
+    timepoint: "16:20"
+  - text: "公司须在收到问询函后 {reply_days} 内回复并履行信息披露义务。"
+    source: 公告原文 · 巨潮资讯
+    timepoint: "16:20"
+  - text: "截至公告披露日，公司尚未回复。"
+    source: 公告原文 · 巨潮资讯
+    timepoint: "16:20"
+  - text: "收到年报问询函属于日常监管行为，并非处罚，亦不构成重大违法违规事项。"
+    source: 公告原文 · 巨潮资讯
+    timepoint: "16:20"
+
+unknowns:
+  - text: 应收账款是否最终发生减值无法判断。
+    action: 需你等待
+  - text: 公司回复内容与回复质量尚未披露。
+    action: 需你等待
+
+infers:
+  - text: 若公司回复不充分，交易所可能采取进一步监管措施。
+    assumption: 回复质量不达标
+    confidence: 中
+    bearish: true
+  - text: 参照历史同类问询的统计口径，短期股价承压概率上升。
+    assumption: 历史统计规律适用于本次事件
+    confidence: 低–中
+    bearish: true
+
+gold:
+  keep:
+    - {id: k1, keyword: 问询函, text: 09-09 收到上交所年报问询函，关注应收账款与商誉减值}
+    - {id: k2, keyword: "{reply_days}", text: "须在 {reply_days} 内回复并履行披露义务"}
+    - {id: k3, keyword: 尚未回复, text: 截至公告披露日公司尚未回复}
+    - {id: k4, keyword: 日常监管, text: 属日常监管行为并非处罚，不构成重大违法违规}
+  filter:
+    - {id: n1, text: 「要暴雷了」情绪帖, standard: 信源}
+    - {id: n2, text: 「退市倒计时」断言, standard: 信源}
+    - {id: n3, text: 「审计师离任」匿名投稿, standard: 信源}
+    - {id: n4, text: 三年前处罚旧闻, standard: 时效}
+
+holdings_variants:
+  - {id: h05, cost: 9.60, ratio: 5.0, horizon: "1-3y", verdict: 有限, contains: 影响权重有限}
+  - {id: h18, cost: 9.60, ratio: 18.0, horizon: "6-12m", verdict: 偏高, contains: 高于多数持有人}
+  - {id: h45, cost: 9.60, ratio: 45.0, horizon: "3y+", verdict: 高, contains: 影响权重高}
+
+variants:
+  - id: G3-v01
+    note: 基准
+    params:
+      reply_days: 10 个交易日
+      quote_move: 下跌 2.4%
+      quote_price: "9.84"
+  - id: G3-v02
+    note: 问询点变更（存货跌价 + 关联交易）
+    params:
+      reply_days: 10 个交易日
+      quote_move: 下跌 2.4%
+      quote_price: "9.84"
+    recall_delta:
+      - source_type: 公告
+        source_name: 巨潮资讯
+        content: "澄海物流股份有限公司于 2026 年 9 月 9 日收到上海证券交易所下发的《关于澄海物流股份有限公司 2025 年年度报告的信息披露监管问询函》。问询函主要关注：一是存货跌价准备的计提充分性；二是与关联方交易定价的公允性。公司须在收到问询函后 {reply_days} 内予以回复并履行信息披露义务。截至公告披露日，公司尚未回复。公司收到年报问询函属于日常监管行为，并非处罚，亦不构成任何重大违法违规事项。以上公告内容为演示用模拟数据。"
+  - id: G3-v03
+    note: 回复期限 5 个交易日
+    params:
+      reply_days: 5 个交易日
+      quote_move: 下跌 2.4%
+      quote_price: "9.84"
+  - id: G3-v04
+    note: 噪音池 +1（审计师传闻变体）
+    params:
+      reply_days: 10 个交易日
+      quote_move: 下跌 2.4%
+      quote_price: "9.84"
+    add_noise:
+      - text: 「审计所已经跑路了，肯定有事」
+        source: 股吧热帖 · 21:20
+        standard: 信源
+        reason: 无信源断言，可过滤
+  - id: G3-v05
+    note: 噪音池 -1（旧闻噪音缺席）
+    drop_noise: [「三年前的处罚旧闻又被翻出来」]
+    params:
+      reply_days: 10 个交易日
+      quote_move: 下跌 2.4%
+      quote_price: "9.84"
+  - id: G3-v06
+    note: 行情大跌
+    params:
+      reply_days: 10 个交易日
+      quote_move: 下跌 5.1%
+      quote_price: "9.62"
+  - id: G3-v07
+    note: 已提交回复（事件推进）
+    params:
+      reply_days: 10 个交易日
+      quote_move: 下跌 0.6%
+      quote_price: "9.80"
+    recall_delta:
+      - source_type: 公告
+        source_name: 巨潮资讯
+        content: "澄海物流股份有限公司于 2026 年 9 月 9 日收到上海证券交易所下发的《关于澄海物流股份有限公司 2025 年年度报告的信息披露监管问询函》。问询函主要关注：一是应收账款余额与账龄结构的真实性及坏账计提的充分性；二是商誉减值计提的充分性。公司已于 2026 年 9 月 12 日披露《关于年报问询函的回复公告》，逐项回复问询内容，并聘请年审会计师发表专项意见。公司收到年报问询函属于日常监管行为，并非处罚，亦不构成任何重大违法违规事项。以上公告内容为演示用模拟数据。"
+  - id: G3-v08
+    note: 媒体标题党升级
+    params:
+      reply_days: 10 个交易日
+      quote_move: 下跌 2.4%
+      quote_price: "9.84"
+    add_noise:
+      - text: 「澄海物流财务造假实锤？」
+        source: 自媒体文章 · 22:00
+        standard: 信源
+        reason: 疑问式标题无事实依据，可过滤
+  - id: G3-v09
+    note: 股吧讨论量激增（摘要变化）
+    params:
+      reply_days: 10 个交易日
+      quote_move: 下跌 2.4%
+      quote_price: "9.84"
+  - id: G3-v10
+    note: 综合变体（期限+噪音+行情）
+    params:
+      reply_days: 15 个交易日
+      quote_move: 下跌 3.3%
+      quote_price: "9.70"
+    add_noise:
+      - text: 「机构都在抛，散户还在接」
+        source: 股吧热帖 · 21:45
+        standard: 信源
+        reason: 无信源断言资金流向，可过滤

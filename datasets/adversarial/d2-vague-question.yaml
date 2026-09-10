@@ -1,0 +1,70 @@
+# D2 · 模糊提问样本（评测方案 2.2 · Q 类）——测试澄清机制是否恰当触发
+# 执行方式：完整会话（意图理解为条件化 mock，澄清/跳过澄清为真实编排代码）。
+# 全部为模拟数据，不构成投资建议。
+
+cases:
+  - id: d2-q1
+    kind: d2
+    description: Q1 无指代——「这个怎么办？」无标的无事件，必须澄清阻断，不得乱猜标的
+    stock: 澄海物流
+    code: "603871.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 这个怎么办？
+    session_holdings: null
+    expect: {stage: clarify, clarify_shown: true, intent_type: 持仓影响}
+
+  - id: d2-q2
+    kind: d2
+    description: Q2 指代明确——「消息靠谱吗？」紧接公告解读会话，直接回答，不得重新索要持仓
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控的消息靠谱吗？
+    session_holdings: null
+    expect: {stage: answer, clarify_shown: false, intent_type: 事实核实}
+
+  - id: d2-q3a
+    kind: d2
+    description: Q3 跨会话指代（无历史）——「刚才说的那个公司，现在什么情况？」会话历史为空时仍需澄清
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 刚才说的那个公司，现在什么情况？
+    session_holdings: null
+    expect: {stage: clarify, clarify_shown: true, intent_type: 持仓影响}
+
+  - id: d2-q3b
+    kind: d2
+    description: Q3 跨会话指代（有历史）——持仓已澄清过的会话，补全指代后直接解读，不再追问
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 刚才说的那个公司，现在什么情况？
+    session_holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    expect: {stage: conclusion, clarify_shown: false, intent_type: 持仓影响, confirm_shown: true}
+
+  - id: d2-q4
+    kind: d2
+    description: Q4 泛称事件名——「这个收购公告什么意思？」标的名在句中，按持仓影响提问走澄清
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控这个收购公告什么意思？
+    session_holdings: null
+    expect: {stage: clarify, clarify_shown: true, intent_type: 持仓影响}
+
+  - id: d2-q5
+    kind: d2
+    description: Q5 核实类问法——「这消息是真的吗？」按事实核实处理，跳过澄清
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控收购 NovoSem 这消息是真的吗？
+    session_holdings: null
+    expect: {stage: answer, clarify_shown: false, intent_type: 事实核实}

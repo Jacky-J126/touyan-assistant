@@ -1,0 +1,135 @@
+# D6 · 确认触发边界样本（评测方案 2.2 · H 类）——条件化确认（仅在推断占比高或涉利空时弹）
+# 执行方式：h1/h2/h5/h6 直调 confirm_needed 纯函数（真实代码），
+# h3/h4/h7 走完整会话（确认编排为真实代码）。
+# 全部为模拟数据，不构成投资建议。
+
+cases:
+  - id: d6-h1
+    kind: d6
+    description: H1 低推断无利空——1/7 且无利空，不弹确认
+    mode: unit
+    facts_count: 6
+    infers:
+      - {text: "短期波动放大。", assumption: "情绪主导定价", confidence: 低–中, bearish: false}
+    expect: {confirm: false}
+
+  - id: d6-h2
+    kind: d6
+    description: H2 全事实——零推断，不弹确认
+    mode: unit
+    facts_count: 5
+    infers: []
+    expect: {confirm: false}
+
+  - id: d6-h3
+    kind: d6
+    description: H3 高推断含利空——3/7 且含利空，必弹且注明触发原因
+    mode: session
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控这个收购公告什么意思？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    confirm_expected: true
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "沐辰智控拟收购 NovoSem 100% 股权。以上公告内容为演示用模拟数据。"}
+    noise: []
+    facts:
+      - {text: "沐辰智控拟收购 NovoSem 100% 股权。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+      - {text: "交易对价约 2.1 亿美元。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+      - {text: "构成重大资产重组，尚需审批。", source: "交易所披露 · 上交所", timepoint: "01:02"}
+      - {text: "公告后首个交易日集合竞价上涨 4.2%。", source: "行情快照（模拟）", timepoint: "02:31"}
+    unknowns: []
+    infers:
+      - {text: "形成第二增长曲线。", assumption: "审批通过、整合按期完成", confidence: 中, bearish: false}
+      - {text: "利息费用与股本摊薄挤压利润。", assumption: "交易按公告对价完成", confidence: 中, bearish: true}
+      - {text: "短期波动放大。", assumption: "无其他重大消息叠加", confidence: 低–中, bearish: false}
+    gold:
+      keep:
+        - {id: k1, keyword: NovoSem, text: 收购 NovoSem 100% 股权}
+      filter: []
+    expect: {confirm: true, reason_contains: [推断占比高, 利空]}
+
+  - id: d6-h4
+    kind: d6
+    description: H4 跳过记录——应弹场景点跳过，结论照常输出且跳过被记录
+    mode: session
+    stock: 沐辰智控
+    code: "688521.SH"
+    event: 重大资产重组公告
+    push_title: 无
+    question: 沐辰智控这个收购公告什么意思？
+    quote_price: 19.12
+    holdings: {cost: 18.40, ratio: 18.0, horizon: "1-3y"}
+    confirm_expected: true
+    action: skip
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "00:47", content: "沐辰智控拟收购 NovoSem 100% 股权。以上公告内容为演示用模拟数据。"}
+    noise: []
+    facts:
+      - {text: "沐辰智控拟收购 NovoSem 100% 股权。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+      - {text: "交易对价约 2.1 亿美元。", source: "公告原文 · 巨潮资讯", timepoint: "00:47"}
+      - {text: "构成重大资产重组，尚需审批。", source: "交易所披露 · 上交所", timepoint: "01:02"}
+      - {text: "公告后首个交易日集合竞价上涨 4.2%。", source: "行情快照（模拟）", timepoint: "02:31"}
+    unknowns: []
+    infers:
+      - {text: "形成第二增长曲线。", assumption: "审批通过、整合按期完成", confidence: 中, bearish: false}
+      - {text: "利息费用与股本摊薄挤压利润。", assumption: "交易按公告对价完成", confidence: 中, bearish: true}
+      - {text: "短期波动放大。", assumption: "无其他重大消息叠加", confidence: 低–中, bearish: false}
+    gold:
+      keep:
+        - {id: k1, keyword: NovoSem, text: 收购 NovoSem 100% 股权}
+      filter: []
+    expect: {confirm: true, skip_recorded: true, conclusion_delivered: true}
+
+  - id: d6-h5
+    kind: d6
+    description: H5 阈值边界——2/5 = 0.4 恰在阈值上，按规则触发
+    mode: unit
+    facts_count: 3
+    infers:
+      - {text: "推断一。", assumption: "假设一", confidence: 中, bearish: false}
+      - {text: "推断二。", assumption: "假设二", confidence: 低, bearish: false}
+    expect: {confirm: true}
+
+  - id: d6-h6
+    kind: d6
+    description: H6 涉利空独占触发——低推断但含 1 条利空，必弹且原因只含利空
+    mode: unit
+    facts_count: 5
+    infers:
+      - {text: "若回复不充分可能引发进一步监管措施。", assumption: "回复质量不达标", confidence: 中, bearish: true}
+    expect: {confirm: true, reason_contains: [利空], reason_not_contains: [占比高]}
+
+  - id: d6-h7
+    kind: d6
+    description: H7 不弹场景走会话——低推断无利空直出结论，confirm_shown 为 0
+    mode: session
+    stock: 澜舟生物
+    code: "301076.SZ"
+    event: 年度业绩预告
+    push_title: 无
+    question: 澜舟生物这个业绩预告什么意思？
+    quote_price: 26.55
+    holdings: {cost: 24.10, ratio: 8.0, horizon: "6-12m"}
+    confirm_expected: false
+    recall:
+      - {source_type: 公告, source_name: 巨潮资讯, timestamp: "17:32", content: "澜舟生物 2026 年度业绩预增 80%–100%。以上公告内容为演示用模拟数据。"}
+    noise: []
+    facts:
+      - {text: "预计 2026 年度归母净利润同比增长 80%–100%。", source: "业绩预告原文 · 巨潮资讯", timepoint: "17:32"}
+      - {text: "增长主要来自政府补助约 1.2 亿元与处置股权收益约 0.8 亿元。", source: "业绩预告原文 · 巨潮资讯", timepoint: "17:32"}
+      - {text: "扣非净利润同比小幅增长约 3%。", source: "业绩预告原文 · 巨潮资讯", timepoint: "17:32"}
+      - {text: "本次业绩预告为初步测算，未经审计。", source: "业绩预告原文 · 巨潮资讯", timepoint: "17:32"}
+      - {text: "预告于 17:32 在深交所信息披露平台同步披露。", source: "交易所披露 · 深交所", timepoint: "17:32"}
+    unknowns: []
+    infers:
+      - {text: "市场可能对高增长过度反应，而经营性改善有限。", assumption: "无其他大额非经常性损益被遗漏", confidence: 中, bearish: false}
+      - {text: "预增落地后短期波动可能放大。", assumption: "情绪主导短期定价", confidence: 低–中, bearish: false}
+    gold:
+      keep:
+        - {id: k1, keyword: "80%–100%", text: 预增 80%–100%}
+      filter: []
+    expect: {confirm: false, conclusion_delivered: true, confirm_shown: 0}

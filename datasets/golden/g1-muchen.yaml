@@ -1,0 +1,226 @@
+# G1 · 突发公告：沐辰智控重大资产重组（与 Demo 同场景，全流程黄金基准）
+# 基准 v01 与 docs/prototype.html / app/mockdata.py 逐字一致；
+# v02–v10 为事件细节 / 噪音池 / 行情变体（评测方案 2.1「10 变体」）。
+# 每条样本内置 3 组持仓参数（占比 4%/18%/50% 变体矩阵）→「与你何干」黄金判定。
+# 全部为模拟数据，不构成投资建议。
+
+stock: 沐辰智控
+code: "688521.SH"
+event: 重大资产重组公告
+push_title: 沐辰智控发布重大公告：拟收购海外半导体设备资产
+question: 沐辰智控今天这个收购公告，对我的持仓有什么影响？
+confirm_expected: true      # 推断 3/7 >= 0.4 且含利空 → 必弹（H3）
+degrade: research           # 研报接口固定超时（S2 降级用例，与 Demo 一致）
+quote_price: 19.12
+noise_summary: 股吧 18 条 · 16 条待过滤
+
+recall:
+  - source_type: 公告
+    source_name: 巨潮资讯
+    timestamp: "00:47"
+    content: "沐辰智控股份有限公司（以下简称「公司」）于 2026 年 9 月 9 日召开董事会，审议通过《关于收购 NovoSem Pte. Ltd. 100% 股权的议案》。公司拟以现金及发行股份相结合的方式收购标的公司全部股权，交易对价约为 {deal_usd} 亿美元（约合人民币 {deal_cny} 亿元，以交割日汇率为准）。本次交易构成重大资产重组，尚需提交股东大会审议，并履行境内外相关监管审批程序。交易能否最终实施存在不确定性，敬请投资者注意投资风险。以上公告内容为演示用模拟数据。"
+  - source_type: 交易所披露
+    source_name: 上交所
+    timestamp: "01:02"
+    content: "{exchange_state}"
+  - source_type: 行情
+    source_name: 模拟行情接口
+    timestamp: "02:31"
+    content: "公告后首个交易日集合竞价{quote_move}。现价 ¥{quote_price}。"
+  - source_type: 媒体
+    source_name: 财经媒体
+    timestamp: "01:40"
+    content: 财经媒体报道 2 篇 · 其中 1 篇通稿
+    status: partial
+  - source_type: 股吧
+    source_name: 股吧 / 社区讨论
+    timestamp: "02:18"
+    content: 股吧讨论 18 条 · 16 条待过滤
+    status: partial
+  - source_type: 研报
+    source_name: 东证研究
+    timestamp: 请求超时
+    content: 券商研报接口请求超时
+    status: degraded
+
+noise:
+  - text: 「完了完了，主力出货，割肉跑！」
+    source: 股吧热帖 · 02:18
+    standard: 信源
+    reason: 情绪化表述，无新增事实；社交平台默认判噪音，无可交叉验证的信源
+  - text: 「重磅利好！这家公司要起飞了」
+    source: 财经号通稿 · 01:40
+    standard: 信源
+    reason: 标题党；低可信渠道改写公告原文，无独立信源与信息增量
+  - text: 「内部人士：收购早有预谋，下月就停牌」
+    source: 自媒体文章 · 01:55
+    standard: 信源
+    reason: 匿名信源不可查证；时间断言无依据
+  - text: 「三个月前传闻：沐辰智控拟发行可转债」
+    source: 财经社区转载 · 三个月前
+    standard: 时效
+    reason: 引用过期信息，已被后续事实（本次公告）推翻
+  - text: 「半导体设备板块今日全线大涨」
+    source: 板块资讯 · 02:05
+    standard: 相关性
+    reason: 行业整体情绪与个股基本面弱关联，对本次解读无信息增量
+
+facts:
+  - text: "沐辰智控于 00:47 发布重大资产重组公告，拟收购新加坡 NovoSem 100% 股权。"
+    source: 公告原文 · 巨潮资讯
+    timepoint: "00:47"
+  - text: "交易对价约 {deal_usd} 亿美元（约合人民币 {deal_cny} 亿元），以现金及发行股份方式支付。"
+    source: 公告原文 · 巨潮资讯
+    timepoint: "00:47"
+  - text: "交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批。"
+    source: 交易所披露 · 上交所
+    timepoint: "01:02"
+  - text: "公告后首个交易日集合竞价{quote_move}。"
+    source: 行情快照（模拟）
+    timepoint: "02:31"
+
+unknowns:
+  - text: 交易对价的现金 / 股份支付比例尚未披露。
+    action: 需你补充
+  - text: NovoSem 的营收、利润与负债数据尚未披露。
+    action: 需你等待
+
+infers:
+  - text: "若交易获批且整合顺利，公司业务将从消费电子精密制造延伸至半导体封装测试设备，形成第二增长曲线。"
+    assumption: 监管审批通过、整合按期完成
+    confidence: 中
+    bearish: false
+  - text: 交易以现金 + 股份方式支付，短期利息费用与股本摊薄将给利润端带来压力。
+    assumption: 交易按公告对价完成
+    confidence: 中
+    bearish: true
+  - text: 重组事件本身会放大股价短期波动，波动幅度通常高于平日。
+    assumption: 无其他重大利好或利空叠加
+    confidence: 低–中
+    bearish: false
+
+gold:
+  keep:
+    - {id: k1, keyword: NovoSem, text: 00:47 公告拟收购新加坡 NovoSem 100% 股权}
+    - {id: k2, keyword: "{deal_cny}", text: "对价约 {deal_usd} 亿美元（约合人民币 {deal_cny} 亿元）现金+股份支付"}
+    - {id: k3, keyword: 重大资产重组, text: 构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险}
+    - {id: k4, keyword: 集合竞价, text: "公告后首个交易日集合竞价 {quote_move}"}
+  filter:
+    - {id: n1, text: 「割肉跑」情绪帖, standard: 信源}
+    - {id: n2, text: 「要起飞了」通稿, standard: 信源}
+    - {id: n3, text: 「内部人士」停牌传闻, standard: 信源}
+    - {id: n4, text: 三个月前可转债旧闻, standard: 时效}
+    - {id: n5, text: 半导体设备板块大涨, standard: 相关性}
+
+holdings_variants:
+  - {id: h18, cost: 18.40, ratio: 18.0, horizon: "1-3y", verdict: 偏高, contains: 高于多数持有人}
+  - {id: h04, cost: 18.40, ratio: 4.0, horizon: "6-12m", verdict: 有限, contains: 影响权重有限}
+  - {id: h50, cost: 18.40, ratio: 50.0, horizon: "<6m", verdict: 高, contains: 影响权重高}
+
+variants:
+  - id: G1-v01
+    note: 基准（与 Demo 逐字一致）
+    params:
+      deal_usd: "2.1"
+      deal_cny: "15.2"
+      exchange_state: 交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险。
+      quote_move: 上涨 4.2%
+      quote_price: "19.12"
+  - id: G1-v02
+    note: 对价下修（事件细节变体）
+    params:
+      deal_usd: "1.5"
+      deal_cny: "10.9"
+      exchange_state: 交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险。
+      quote_move: 上涨 1.1%
+      quote_price: "19.12"
+  - id: G1-v03
+    note: 公告次日行情回落（行情变体）
+    params:
+      deal_usd: "2.1"
+      deal_cny: "15.2"
+      exchange_state: 交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险。
+      quote_move: 下跌 1.8%
+      quote_price: "18.98"
+  - id: G1-v04
+    note: 噪音池 +1（机构调研纪要泄露传闻）
+    params:
+      deal_usd: "2.1"
+      deal_cny: "15.2"
+      exchange_state: 交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险。
+      quote_move: 上涨 4.2%
+      quote_price: "19.12"
+    add_noise:
+      - text: 「机构调研纪要流出：对赌业绩三年翻倍」
+        source: 投资社区转载 · 02:40
+        standard: 信源
+        reason: 非公开渠道流出内容，真实性不可查证
+  - id: G1-v05
+    note: 噪音池 -1（旧闻噪音缺席，噪音条数 4）
+    drop_noise: [「三个月前传闻：沐辰智控拟发行可转债」]
+    params:
+      deal_usd: "2.1"
+      deal_cny: "15.2"
+      exchange_state: 交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险。
+      quote_move: 上涨 4.2%
+      quote_price: "19.12"
+  - id: G1-v06
+    note: 对价上调 + 板块噪音变体
+    params:
+      deal_usd: "2.8"
+      deal_cny: "20.4"
+      exchange_state: 交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险。
+      quote_move: 上涨 6.8%
+      quote_price: "20.02"
+    add_noise:
+      - text: 「半导体设备赛道集体起飞，下一个十倍股在这里」
+        source: 财经短视频文案 · 02:12
+        standard: 相关性
+        reason: 赛道泛化炒作与个股基本面弱关联
+  - id: G1-v07
+    note: 审批推进（交易所披露变更）
+    params:
+      deal_usd: "2.1"
+      deal_cny: "15.2"
+      exchange_state: 股东大会已审议通过本次交易，尚需境内外监管审批，存在终止风险。
+      quote_move: 上涨 4.2%
+      quote_price: "19.12"
+  - id: G1-v08
+    note: 直播荐股噪音 + 行情大涨
+    params:
+      deal_usd: "2.1"
+      deal_cny: "15.2"
+      exchange_state: 交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险。
+      quote_move: 上涨 9.9%
+      quote_price: "20.89"
+    add_noise:
+      - text: 「直播间老师喊单：这个票闭眼上车」
+        source: 直播切片 · 03:05
+        standard: 信源
+        reason: 荐股话术无信源与依据，属合规风险内容
+  - id: G1-v09
+    note: 股吧情绪升级（多条情绪噪音）
+    params:
+      deal_usd: "2.1"
+      deal_cny: "15.2"
+      exchange_state: 交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险。
+      quote_move: 上涨 4.2%
+      quote_price: "19.12"
+    add_noise:
+      - text: 「散户都在跑，别当接盘侠！」
+        source: 股吧热帖 · 02:55
+        standard: 信源
+        reason: 情绪煽动无新增事实，无可交叉验证信源
+  - id: G1-v10
+    note: 综合变体（对价+噪音+行情）
+    params:
+      deal_usd: "2.3"
+      deal_cny: "16.7"
+      exchange_state: 交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批，存在终止风险。
+      quote_move: 下跌 0.5%
+      quote_price: "19.05"
+    add_noise:
+      - text: 「并购标的财务造假前科被扒出」
+        source: 匿名投稿 · 02:47
+        standard: 信源
+        reason: 匿名不可查证，无官方信源交叉验证

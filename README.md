@@ -4,7 +4,7 @@ An open-source AI research assistant for A-share retail investors: **noise filte
 
 围绕自选股做**噪音过滤 + 可解释解读**，看清「发生了什么、与我何干」——不做买卖决定。
 
-> **状态：开发中**（阶段 2/4 完成：mock 管线全通）。零 key 复现 G1 Demo 全流程；下一步为测试与评测体系（阶段 3）。
+> **状态：开发中**（阶段 3/4 完成：测试与评测体系——元测试全绿，红线全过）。零 key 复现 G1 Demo 全流程；下一步为真实数据源 + GitHub 上线（阶段 4）。
 
 ## 定位 / Positioning
 
@@ -22,6 +22,7 @@ An open-source AI research assistant for A-share retail investors: **noise filte
 | [docs/eval-plan.md](docs/eval-plan.md) | 评测方案 V0.2：评测体系、Benchmark 数据集、Judge J1–J4、上线前最低验证标准、验证结论表 |
 | [docs/prototype.html](docs/prototype.html) | 交互原型 V0.2（单文件 HTML，双击浏览器打开） |
 | [docs/README.md](docs/README.md) | 文档族说明：阅读顺序、交互点清单、版本注记 |
+| [docs/manual-eval/](docs/manual-eval/) | 人工测评四件套：区分测验 / 可信度感知问卷 / think-aloud 可用性测试 / 术语理解度测验（不进 CI，上线前人工执行） |
 
 ## 路线图 / Roadmap
 
@@ -29,7 +30,7 @@ An open-source AI research assistant for A-share retail investors: **noise filte
 |---|---|---|
 | 1 仓库化与基线 | 文档族入库、LICENSE、README、基线提交 | ✅ 完成 |
 | 2 mock 管线 | 管线 S1–S7 + Streamlit P0–P6，零 key 复现 Demo 全流程 | ✅ 完成 |
-| 3 测试与评测 | 数据集 G1–G3/D1–D7、J1–J4 Judge harness、代码断言、红线门槛 | 待开始 |
+| 3 测试与评测 | 数据集 G1–G3/D1–D7、J1–J4 Judge harness、代码断言、红线门槛、人工测评材料 | ✅ 完成（元测试） |
 | 4 真实数据源 + 上线 | akshare/tushare Provider、CI、GitHub 上线 | 待开始 |
 
 ## 快速开始 / Quick start
@@ -49,6 +50,9 @@ uv venv .venv --python 3.12 && uv pip install --python .venv/bin/python -e ".[de
 
 # ③ 测试与静态检查
 .venv/bin/python -m pytest && .venv/bin/ruff check .
+
+# ④ 评测（元测试：数据集 → mock 管线 → Judge → 报告，无需任何 key）
+.venv/bin/python -m evals.runner   # 报告输出至 evals/latest-report.md
 ```
 
 配置 `LLM_API_KEY`（OpenAI 兼容接口）后，同一管线代码切换为真实 LLM 调用；真实数据源（akshare/tushare）在阶段 4 接入。
@@ -66,7 +70,10 @@ app/
 └── web/app.py           # Streamlit P0–P6 页面
 prompts/                 # 各阶段提示词（放文件不放代码）
 scripts/demo.py          # CLI 演示
-tests/                   # 54 项确定性单测（红线断言 + 状态机 + 全流程集成）
+tests/                   # 确定性单测（红线断言 + 状态机 + 全流程集成 + 评测元测试）
+evals/                   # 评测体系：数据集加载、断言、J1–J4 Judge、runner、阈值、报告
+datasets/                # 黄金集 G1–G3（30 变体 × 3 持仓）+ 拓展集 D1–D7（49 条目）
+docs/manual-eval/        # 人工测评四件套（不进 CI）
 ```
 
 ## 免责声明 / Disclaimer
