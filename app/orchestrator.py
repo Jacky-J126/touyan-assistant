@@ -40,11 +40,17 @@ FALLBACK_ANSWER = "我可以围绕本次解读继续解释客观信息（事实�
 class Session:
     """一次「触达 → 解读 → 追问」会话的全部状态。"""
 
-    def __init__(self, llm=None, provider=None, session_id: str | None = None):
+    def __init__(
+        self,
+        llm=None,
+        provider=None,
+        session_id: str | None = None,
+        event_path=None,
+    ):
         self.id = session_id or uuid4().hex[:8]
         self.llm = llm or get_llm()
         self.provider = provider or MockProvider()
-        self.events = EventLog()
+        self.events = EventLog(path=event_path)  # 可选持久化（data/，已 gitignore）
         self.stage = "idle"
         self.question: str | None = None
         self.intent = None

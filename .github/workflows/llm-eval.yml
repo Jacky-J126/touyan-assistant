@@ -1,0 +1,48 @@
+name: LLM Judge Eval
+
+# 真实 LLM Judge 双评（评测方案 3.2）：手动触发，消耗调用方自己的模型额度。
+# 需在仓库 Settings → Secrets and variables 配置：
+#   Secrets: JUDGE_MODEL_A_BASE_URL / JUDGE_MODEL_A_API_KEY（B 同）
+#   Variables（模型名，非机密）: JUDGE_MODEL_A_MODEL / JUDGE_MODEL_B_MODEL
+# 默认只跑 5 个场景（30 样本 × 双模型 × 多维度，成本可控）；需要全量时
+# 把 limit 设为 0 之上的全部场景数（30）。报告 evals/llm-report.md/.json 作 artifact。
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 场景数（1–30，默认 5）
+        required: false
+        default: "5"
+
+jobs:
+  llm-eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 安装依赖
+        run: pip install -e ".[dev]"
+
+      - name: 双评执行（A/B 独立评分，分差 ≥2 标记转人工仲裁）
+        run: python -m evals.llm_eval --limit ${{ inputs.limit }}
+        env:
+          JUDGE_MODEL_A_BASE_URL: ${{ secrets.JUDGE_MODEL_A_BASE_URL }}
+          JUDGE_MODEL_A_API_KEY: ${{ secrets.JUDGE_MODEL_A_API_KEY }}
+          JUDGE_MODEL_A_MODEL: ${{ vars.JUDGE_MODEL_A_MODEL }}
+          JUDGE_MODEL_B_BASE_URL: ${{ secrets.JUDGE_MODEL_B_BASE_URL }}
+          JUDGE_MODEL_B_API_KEY: ${{ secrets.JUDGE_MODEL_B_API_KEY }}
+          JUDGE_MODEL_B_MODEL: ${{ vars.JUDGE_MODEL_B_MODEL }}
+
+      - name: 上传双评报告
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-eval-report
+          path: |
+            evals/llm-report.md
+            evals/llm-report.json
