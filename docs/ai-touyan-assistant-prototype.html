@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>看懂你的自选股 · 交互原型 V0.2</title>
+<style>
+/* ═════════════ 设计系统 ═════════════ */
+:root{
+  --bg:#f5f4ef; --surface:#ffffff; --surface2:#faf9f5;
+  --ink:#1f2733; --ink2:#525e6c; --ink3:#8b94a1;
+  --line:#e6e4dc; --line2:#d9d6cb;
+  --navy:#16344f; --navy-h:#20517a; --navy-soft:#eef2f6; --navy-line:#cfdbe6;
+  --fact-bg:#e9f3eb; --fact-ink:#1f6b3a; --fact-line:#c9e0cf;
+  --infer-bg:#f8f0db; --infer-ink:#8a6400; --infer-line:#e9d6a2;
+  --unk-bg:#e9f1f8;  --unk-ink:#27608d;  --unk-line:#c6dbe9;
+  --noise-bg:#efeee9; --noise-ink:#6e6b61; --noise-line:#dcd9cf;
+  --warn-bg:#fbf1de; --warn-ink:#99661a; --warn-line:#ecd9ae;
+  --danger:#a13a2c; --danger-soft:#f7ecea; --danger-line:#e4c9c4;
+  --up:#c0392b; --down:#1e7a3d;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --serif:"Songti SC","Noto Serif CJK SC","Source Han Serif SC",STSong,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font:15px/1.7 var(--sans);-webkit-font-smoothing:antialiased}
+::selection{background:#dde7ee}
+button{font-family:var(--sans)}
+:focus-visible{outline:2px solid var(--navy-h);outline-offset:2px}
+
+/* ═════════════ 顶部框架 ═════════════ */
+.chrome{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--line)}
+.chrome-in{max-width:1180px;margin:0 auto;height:58px;display:flex;align-items:center;gap:16px;padding:0 24px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand-mark{font:700 20px var(--serif);letter-spacing:.1em}
+.brand-sub{font-size:12px;color:var(--ink3)}
+.chrome-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.flow-badge{font:11px var(--mono);color:var(--navy);background:var(--navy-soft);border:1px solid var(--navy-line);border-radius:999px;padding:4px 12px;white-space:nowrap}
+.mock-badge{font-size:11px;color:var(--warn-ink);background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:999px;padding:4px 12px;white-space:nowrap}
+.link-btn{font-size:12px;color:var(--ink3);background:none;border:none;cursor:pointer;padding:4px 6px;text-decoration:underline;text-decoration-color:transparent;transition:color .15s}
+.link-btn:hover{color:var(--navy);text-decoration-color:var(--navy-line)}
+.steps{max-width:1180px;margin:0 auto;display:flex;justify-content:center;gap:4px;padding:0 24px;border-top:1px solid var(--line)}
+.step{display:flex;align-items:baseline;gap:6px;background:none;border:none;border-bottom:2px solid transparent;padding:10px 14px;cursor:pointer;font-size:13px;color:var(--ink3);transition:color .15s,border-color .15s}
+.step-num{font:11px var(--mono)}
+.step:hover{color:var(--ink2)}
+.step.visited{color:var(--ink2)}
+.step.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
+.step.active .step-num{color:var(--navy)}
+
+/* ═════════════ 视图与通用组件 ═════════════ */
+.view{display:none}
+.view.active{display:block;animation:fadeUp .3s ease}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 24px 40px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;box-shadow:0 1px 2px rgba(31,39,51,.04)}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.card-title{font-size:15px;font-weight:600;color:var(--ink)}
+.card-sub{font-size:12px;color:var(--ink3)}
+p.card-sub{font-size:12.5px;color:var(--ink2);line-height:1.7;margin-bottom:4px}
+.card-actions{margin-top:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:600 13.5px var(--sans);padding:9px 18px;border-radius:6px;border:1px solid transparent;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.btn.primary{background:var(--navy);color:#fff}
+.btn.primary:hover{background:var(--navy-h)}
+.btn.ghost{background:#fff;color:var(--navy);border-color:var(--navy-line)}
+.btn.ghost:hover{border-color:var(--navy);background:var(--navy-soft)}
+.btn.small{padding:5px 12px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hitl-tag{margin-left:auto;font-size:11px;color:var(--navy);border:1px solid var(--navy-line);background:var(--navy-soft);padding:2px 8px;border-radius:3px;white-space:nowrap}
+
+/* 标签体系（与 PRD 一致） */
+.tag{font-size:11px;padding:1.5px 7px;border-radius:3px;border:1px solid transparent;white-space:nowrap;font-weight:600}
+.tag-fact{color:var(--fact-ink);background:var(--fact-bg);border-color:var(--fact-line)}
+.tag-infer{color:var(--infer-ink);background:var(--infer-bg);border-color:var(--infer-line)}
+.tag-unk{color:var(--unk-ink);background:var(--unk-bg);border-color:var(--unk-line)}
+.tag-noise{color:var(--noise-ink);background:var(--noise-bg);border-color:var(--noise-line)}
+.chip{font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--line2);color:var(--ink2);background:var(--surface);white-space:nowrap}
+.chip-ok{color:var(--fact-ink);background:var(--fact-bg);border-color:var(--fact-line)}
+.chip-warn{color:var(--warn-ink);background:var(--warn-bg);border-color:var(--warn-line)}
+.chip-dim{color:var(--ink3);background:var(--noise-bg);border-color:var(--noise-line)}
+
+/* 出场动画 */
+.rv{opacity:0;transform:translateY(8px);transition:opacity .45s ease,transform .45s ease}
+.rv.show{opacity:1;transform:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes rowIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ═════════════ P0 · 首页 ═════════════ */
+.p0-head{margin:8px 0 24px}
+.p0-head h1{font:700 30px var(--serif);letter-spacing:.06em}
+.p0-sub{margin-top:10px;font-size:14px;color:var(--ink2);max-width:660px}
+.p0-meta{font:11px var(--mono);color:var(--ink3);margin-top:8px;letter-spacing:.05em}
+.p0-grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;align-items:start}
+.wl-row{display:flex;justify-content:space-between;align-items:center;padding:12px 2px;border-bottom:1px solid var(--line)}
+.wl-row:last-of-type{border-bottom:none}
+.wl-name{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+.wl-code{font:11.5px var(--mono);color:var(--ink3);margin-top:2px}
+.wl-dot{width:7px;height:7px;border-radius:50%;background:var(--danger);animation:pulse 1.6s ease infinite}
+.wl-badge-pos{font-size:10.5px;color:var(--navy);border:1px solid var(--navy-line);background:var(--navy-soft);padding:1px 6px;border-radius:3px}
+.wl-badge{font-size:10.5px;color:var(--ink3);border:1px solid var(--line2);padding:1px 6px;border-radius:3px}
+.wl-side{display:flex;align-items:center;gap:10px}
+.wl-px{text-align:right}
+.px{font:600 13.5px var(--mono);display:block}
+.chg{font:11.5px var(--mono)}
+.chg.up{color:var(--up)}.chg.down{color:var(--down)}
+.wl-note{font-size:11px;color:var(--ink3);margin-top:10px}
+.announce{border:1px solid var(--line2);border-left:3px solid var(--navy);padding:22px 24px}
+.ann-kicker{font:600 11px var(--mono);color:var(--navy);letter-spacing:.08em;margin-bottom:12px}
+.ann-title{font:700 22px/1.5 var(--serif);margin-bottom:16px}
+.ann-item{display:flex;gap:8px;align-items:flex-start;font-size:13.5px;line-height:1.8;margin-bottom:8px}
+.ann-item .tag{margin-top:4px;flex:none}
+.src-inline{font:11px var(--mono);color:var(--ink3);margin-left:4px;white-space:nowrap}
+.ann-note{font-size:12px;color:var(--ink2);border-top:1px dashed var(--line);margin-top:12px;padding-top:12px}
+.ann-actions{display:flex;gap:10px;margin-top:16px}
+
+/* ═════════════ 对话工作台（P1–P5） ═════════════ */
+.chat-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.chat-panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px;max-height:calc(100vh - 240px);overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.chat-panel::-webkit-scrollbar{width:8px}
+.chat-panel::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+.bubble.user{align-self:flex-end;max-width:78%;background:var(--navy-soft);border:1px solid var(--navy-line);border-radius:10px 10px 2px 10px;padding:10px 14px;font-size:14px}
+.chip-sum{align-self:center;font-size:12px;color:var(--ink2);border:1px solid var(--line2);border-radius:999px;padding:6px 14px;background:var(--surface2)}
+.chat-input-row{display:flex;gap:10px;margin-top:4px}
+.chat-input-row input{flex:1;padding:9px 12px;border:1px solid var(--line2);border-radius:8px;font:13.5px var(--sans);color:var(--ink)}
+.chat-input-row input:focus{border-color:var(--navy);outline:none;box-shadow:0 0 0 2px rgba(22,52,79,.08)}
+
+/* P1 · 意图与澄清 */
+.intent-box{display:flex;gap:10px;align-items:flex-start;background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--ink2)}
+.ib-step{font:600 12px var(--mono);color:var(--navy);background:var(--navy-soft);border:1px solid var(--navy-line);border-radius:4px;padding:1px 6px;flex:none;margin-top:2px}
+.intent-box b{color:var(--ink);font-weight:600}
+.clar-card{border:1px solid var(--navy-line);border-left:3px solid var(--navy);background:var(--surface)}
+.field-row{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:12px;margin:14px 0 8px}
+.field label{display:block;font-size:12px;color:var(--ink2);margin-bottom:5px}
+.field input,.field select{width:100%;padding:8px 10px;border:1px solid var(--line2);border-radius:6px;font:14px var(--sans);background:#fff;color:var(--ink)}
+.field input:focus,.field select:focus{border-color:var(--navy);outline:none;box-shadow:0 0 0 2px rgba(22,52,79,.08)}
+.sample-link{background:none;border:none;color:var(--navy);font-size:12.5px;cursor:pointer;padding:0;border-bottom:1px dashed var(--navy-line)}
+.sample-link:hover{border-bottom-color:var(--navy)}
+.form-err{display:none;font-size:12.5px;color:var(--danger);background:var(--danger-soft);border:1px solid var(--danger-line);border-radius:6px;padding:8px 12px;margin:10px 0 0}
+.form-err.show{display:block;animation:fadeUp .3s ease}
+
+/* P2 · 检索/过滤/事实 */
+.proc-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.ac-title{font-size:15px;font-weight:600;color:var(--ink)}
+.ps-flow{font:11px var(--mono);color:var(--ink3);border:1px solid var(--line);padding:2px 8px;border-radius:3px}
+.proc-head-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.proc-stage{margin-bottom:16px}
+.ps-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ps-dot{width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font:600 12px var(--mono);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ps-title{font-size:13.5px;font-weight:600;color:var(--ink)}
+.ps-status{font-size:12px;color:var(--ink3);margin-left:4px}
+.ps-status.done{color:var(--fact-ink)}
+.ps-body{display:none}
+.ps-body.show{display:block}
+.src-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;font-size:13px;background:var(--surface)}
+.src-name{font-weight:600;flex:none}
+.src-meta{margin-left:auto;font:11.5px var(--mono);color:var(--ink3)}
+.ps-body.show .src-row,.ps-body.show .noise-item,.ps-body.show .fact-item{animation:rowIn .45s ease both;animation-delay:calc(var(--i,0)*90ms)}
+.noise-item{border:1px solid var(--noise-line);background:var(--noise-bg);border-radius:6px;padding:9px 12px;margin-bottom:8px}
+.noise-txt{font-size:13px;color:var(--noise-ink);margin-top:5px}
+.noise-txt s{text-decoration-color:var(--ink3)}
+.noise-src{font-size:11.5px;color:var(--ink3);margin-left:8px}
+.noise-reason{font-size:12px;color:var(--noise-ink);margin-top:5px;padding-top:5px;border-top:1px dashed var(--noise-line)}
+.fact-item{display:flex;gap:10px;padding:8px 12px;border:1px solid var(--fact-line);border-radius:6px;margin-bottom:8px;background:var(--surface)}
+.fact-num{font:600 12px var(--mono);color:var(--fact-ink);flex:none;padding-top:3px}
+.fact-main{font-size:13px;color:var(--ink)}
+.fact-main .tag{margin-right:6px}
+.fact-src{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.degrade-note{font-size:12.5px;color:var(--warn-ink);background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:6px;padding:9px 12px;margin:12px 0}
+
+/* P3 · 分析与确认 */
+.an-row{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line);border-radius:6px;margin-bottom:8px;background:var(--surface)}
+.an-spin{width:14px;height:14px;border:2px solid #d8dce2;border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;flex:none}
+.an-check{display:none;color:var(--fact-ink);font-weight:700;flex:none;width:14px}
+.an-row.done .an-spin{display:none}
+.an-row.done .an-check{display:inline}
+.an-main{display:flex;flex-direction:column;gap:1px}
+.an-name{font-size:13.5px;font-weight:600;color:var(--ink)}
+.an-desc{font-size:12px;color:var(--ink3)}
+.confirm-card{border:1px solid var(--navy-line);border-left:3px solid var(--navy);background:var(--navy-soft)}
+.cf-tag{display:inline-block;font-size:11px;font-weight:600;color:var(--navy);border:1px solid var(--navy-line);background:#fff;padding:2px 8px;border-radius:3px;margin-bottom:10px}
+.cf-body{font-size:13.5px;color:var(--ink2);line-height:1.8}
+.cf-actions{display:flex;gap:10px;margin-top:14px}
+.object-panel{display:none;border-top:1px dashed var(--navy-line);margin-top:14px;padding-top:14px}
+.object-panel.open{display:block;animation:fadeUp .3s ease}
+.op-title{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.obj-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:999px;padding:5px 12px;font-size:12.5px;color:var(--ink2);cursor:pointer;margin:0 8px 8px 0;background:#fff}
+.obj-chip input{accent-color:var(--navy)}
+.obj-chip:has(input:checked){border-color:var(--navy);color:var(--navy);background:#fff}
+.obj-note{display:none;font-size:12px;color:var(--fact-ink);background:var(--fact-bg);border:1px solid var(--fact-line);padding:7px 10px;border-radius:6px;margin-top:10px}
+.obj-note.show{display:block;animation:fadeUp .3s ease}
+
+/* P4 · 结论 */
+.concl-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.concl-meta{font:11.5px var(--mono);color:var(--ink3)}
+.sec{padding:12px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);margin-bottom:12px}
+.sec-head{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.sec-note{font-size:11.5px;font-weight:400;color:var(--ink3);margin-left:auto}
+.sec-fact{background:#fdfefd;border-color:var(--fact-line);border-left:3px solid var(--fact-ink)}
+.sec-infer{background:#fffdf6;border-color:var(--infer-line);border-left:3px solid var(--infer-ink)}
+.sec-unk{background:#fbfdfe;border-color:var(--unk-line);border-left:3px solid var(--unk-ink)}
+.item{font-size:13.5px;line-height:1.75;color:var(--ink);margin-bottom:8px}
+.item .tag{margin-right:6px}
+.item-src{font-size:11.5px;color:var(--ink3);margin-top:2px}
+.assume-row{font-size:12.5px;color:var(--infer-ink);background:var(--infer-bg);border:1px solid var(--infer-line);border-radius:6px;padding:6px 10px;margin-top:6px;display:inline-block}
+.conf-row{font-size:12.5px;color:var(--ink2);margin-top:6px}
+.conf-row b{color:var(--infer-ink)}
+.fold{margin-top:12px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.fold-head{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:12.5px;color:var(--ink2);cursor:pointer;background:var(--surface2)}
+.fold-head span{transition:transform .2s ease;color:var(--ink3)}
+.fold-head.open span{transform:rotate(90deg)}
+.fold-body{display:none;padding:10px 14px;border-top:1px solid var(--line)}
+.fold-body.open{display:block;animation:fadeUp .25s ease}
+.fold-noise{font-size:12.5px;color:var(--noise-ink);padding:5px 0;border-bottom:1px dashed var(--noise-line)}
+.fold-noise:last-child{border-bottom:none}
+.src-foot{font-size:11.5px;color:var(--ink3);line-height:1.7;border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.quick-ask{margin-top:14px}
+
+/* P5 · 拒答与自检清单 */
+.refusal{border:1px solid var(--line2);border-left:3px solid var(--danger);background:var(--surface)}
+.ref-kicker{display:inline-block;font-size:11px;font-weight:600;color:var(--danger);background:var(--danger-soft);border:1px solid var(--danger-line);padding:2px 8px;border-radius:3px;margin-bottom:10px}
+.ref-statement{font-size:16.5px;font-weight:600;color:var(--ink);margin-bottom:12px}
+.reason-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.reason-item{font-size:13px;line-height:1.7;color:var(--ink2);padding-left:14px;border-left:2px solid var(--line2)}
+.reason-item b{color:var(--ink);margin-right:6px}
+.risk-block{border-top:1px dashed var(--line);padding-top:14px;margin-bottom:16px}
+.rb-head{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:10px;display:flex;align-items:baseline;gap:8px}
+.rb-sub{font-size:11.5px;font-weight:400;color:var(--ink3)}
+.risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.risk-card{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface2)}
+.risk-name{font-size:12.5px;font-weight:600;color:var(--navy);margin-bottom:4px}
+.risk-txt{font-size:12.5px;line-height:1.7;color:var(--ink2)}
+.checklist{border-top:1px dashed var(--line);padding-top:14px}
+.cl-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.cl-prog{display:flex;align-items:center;gap:8px;margin-left:auto}
+.prog-track{width:130px;height:6px;border-radius:999px;background:var(--line);overflow:hidden}
+.prog-bar{height:100%;width:0;background:var(--navy);transition:width .35s ease;border-radius:999px}
+.prog-text{font:11.5px var(--mono);color:var(--ink3)}
+.cl-sub{font-size:12.5px;color:var(--ink2);margin:6px 0 12px}
+.cl-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.cl-col{border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface2)}
+.cl-col-head{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:8px}
+.cl-item{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.6;color:var(--ink);padding:5px 0;cursor:pointer}
+.cl-item input{accent-color:var(--navy);margin-top:3px;flex:none}
+.cl-item-txt{flex:1}
+.cl-eg{font-size:10.5px;color:var(--ink3);border:1px solid var(--line2);border-radius:3px;padding:0 4px;margin-left:6px}
+.cl-add-row{display:flex;gap:6px;margin-top:8px}
+.cl-add-input{flex:1;min-width:0;padding:6px 9px;border:1px solid var(--line2);border-radius:6px;font-size:12px;color:var(--ink)}
+.cl-add-input:focus{border-color:var(--navy);outline:none}
+.final-card{display:none;margin-top:14px;background:var(--fact-bg);border:1px solid var(--fact-line);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--fact-ink);line-height:1.8}
+.final-card.show{display:block;animation:fadeUp .4s ease}
+
+/* ═════════════ 右侧栏 ═════════════ */
+.rail{position:sticky;top:136px;display:flex;flex-direction:column;gap:14px}
+.rail-card{padding:14px 16px}
+.rail-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.rail-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink2);padding:4px 0}
+.rr-dot{width:8px;height:8px;border-radius:50%;background:var(--line2);flex:none}
+.rr-dot.done{background:var(--fact-ink)}
+.rr-dot.warn{background:var(--warn-ink)}
+.rr-state{margin-left:auto;font-size:11px;color:var(--ink3)}
+.rail-text{font-size:12.5px;color:var(--ink2);line-height:1.7}
+.rail-flow{font:11px var(--mono);color:var(--ink3);margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)}
+.legend-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink2);padding:5px 0}
+.legend-row .tag{flex:none}
+.mini-stat{display:flex;align-items:baseline;gap:8px}
+.mini-stat b{font:600 15px var(--mono);color:var(--navy)}
+.mini-note{font-size:11px;color:var(--ink3)}
+.ctx-row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink2);padding:4px 0}
+.ctx-row b{color:var(--ink);font-weight:600}
+
+/* ═════════════ 页脚 / 推送 / 弹窗 ═════════════ */
+.foot{max-width:1180px;margin:26px auto 0;padding:0 24px;font-size:11.5px;color:var(--ink3);line-height:1.8;text-align:center}
+.toast{position:fixed;top:118px;right:24px;width:320px;background:#fff;border:1px solid var(--line2);border-left:3px solid var(--navy);border-radius:8px;padding:14px 16px;box-shadow:0 8px 28px rgba(31,39,51,.14);opacity:0;transform:translateY(-8px);transition:opacity .35s ease,transform .35s ease;z-index:60;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.toast-head{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.toast-body{font-size:12.5px;color:var(--ink2)}
+.toast-foot{font-size:11px;color:var(--ink3);margin-top:6px}
+.mock-mini{font:10.5px var(--mono);color:var(--warn-ink);background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:3px;padding:0 4px;margin-left:4px}
+.modal{position:fixed;inset:0;background:rgba(23,32,45,.4);display:none;align-items:center;justify-content:center;z-index:80}
+.modal.open{display:flex}
+.modal-card{width:min(640px,92vw);background:var(--surface);border-radius:10px;padding:22px 26px;box-shadow:0 12px 40px rgba(0,0,0,.18);animation:fadeUp .25s ease}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.modal-close{background:none;border:none;font-size:20px;color:var(--ink3);cursor:pointer;line-height:1;padding:0 4px}
+.modal-close:hover{color:var(--ink)}
+.modal-body{font:13.5px/1.9 var(--serif);color:var(--ink)}
+.modal-body p{margin-bottom:12px}
+.modal-mock{font:11px var(--sans)!important;color:var(--ink3);margin-top:14px;padding-top:10px;border-top:1px dashed var(--line)}
+
+/* V0.2 增量：判定标准 / 指标口径 / 个性化 / 白话 / 追问升级 */
+.std-chip{font:10.5px var(--mono);color:var(--ink3);border:1px solid var(--line2);border-radius:3px;padding:0 5px;margin-right:6px;white-space:nowrap}
+.std-note{font-size:11.5px;color:var(--ink3);margin:0 0 8px}
+.metric-note{font:11px var(--mono);color:var(--ink3);margin-top:8px}
+.sec-personal{background:#fbfdfe;border-color:var(--navy-line);border-left:3px solid var(--navy)}
+.pp-row{display:flex;align-items:baseline;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.pp-row:last-child{border-bottom:none}
+.pp-label{flex:none;width:44px;font-size:12px;color:var(--ink3)}
+.pp-val{flex:none;font:600 13px var(--mono);color:var(--navy)}
+.pp-verdict{color:var(--ink2)}
+.cf-trigger{font-size:12px;color:var(--ink2);background:#fff;border:1px dashed var(--navy-line);border-radius:6px;padding:7px 10px;margin-bottom:10px}
+.gloss-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
+.gloss-row:last-child{border-bottom:none}
+.gloss-term{flex:none;width:96px;font-weight:600;color:var(--navy)}
+.gloss-txt{color:var(--ink2)}
+.esc-zone{border:1px dashed var(--line2);background:var(--surface2);display:flex;flex-direction:column;gap:10px}
+.esc-title{font-size:12.5px;font-weight:600;color:var(--ink)}
+.resp-card{border:1px solid var(--line);border-left:3px solid var(--navy);background:var(--surface2);padding:12px 14px;font-size:13px;color:var(--ink2);line-height:1.8}
+.resp-card.closed{border-left-color:var(--danger)}
+.resp-card.closed .ref-kicker{margin-bottom:8px}
+
+@media (max-width:1120px){
+  .chat-grid{grid-template-columns:1fr}
+  .rail{display:none}
+  .p0-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="chrome">
+  <div class="chrome-in">
+    <div class="brand"><span class="brand-mark">看懂</span><span class="brand-sub">自选股投研助手 · 交互原型 V0.2</span></div>
+    <div class="chrome-right">
+      <button class="link-btn" id="btn-reset">重置演示</button>
+      <span class="flow-badge" id="flow-badge">流程定位：—</span>
+      <span class="mock-badge">模拟数据 · 演示环境</span>
+    </div>
+  </div>
+  <nav class="steps" id="steps">
+    <button class="step" data-step="p0" title="触发器 · 流程图起点（U 之前）"><span class="step-num">01</span>触达</button>
+    <button class="step" data-step="p1" title="①②③ 意图理解 · 需澄清（HITL）"><span class="step-num">02</span>澄清</button>
+    <button class="step" data-step="p2" title="④⑤⑥ 召回 · 过滤 · 事实（含降级 D）"><span class="step-num">03</span>检索·过滤</button>
+    <button class="step" data-step="p3" title="⑦⑧ 分析生成 · 结论前确认（HITL）"><span class="step-num">04</span>确认理解</button>
+    <button class="step" data-step="p4" title="⑨ 带标签结论输出"><span class="step-num">05</span>结论解读</button>
+    <button class="step" data-step="p5" title="⑩ 拒答 · 自检清单 · 结束（HITL）"><span class="step-num">06</span>追问应答</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═════════════ P0 · 首页：自选股与深夜公告 ═════════════ -->
+<section class="view" id="p0">
+  <div class="wrap">
+    <div class="p0-head">
+      <h1>看懂你的自选股</h1>
+      <p class="p0-sub">围绕自选股做噪音过滤 + 可解释解读，看清「发生了什么、与我何干」——不做买卖决定。</p>
+      <p class="p0-meta">交互原型 V0.2 · 演示场景：凌晨的公告 · 对应 PRD 场景二</p>
+    </div>
+    <div class="p0-grid">
+      <div class="card watchlist">
+        <div class="card-head"><span class="card-title">自选股</span><span class="card-sub">3 只自选 · 1 只持仓</span></div>
+        <div class="wl-row wl-alert">
+          <div class="wl-main">
+            <div class="wl-name">沐辰智控<span class="wl-dot"></span></div>
+            <div class="wl-code">688521.SH</div>
+          </div>
+          <div class="wl-side">
+            <span class="wl-badge-pos">持仓</span>
+            <div class="wl-px"><span class="px">19.12</span><span class="chg up">+3.9%</span></div>
+          </div>
+        </div>
+        <div class="wl-row">
+          <div class="wl-main">
+            <div class="wl-name">澄海物流</div>
+            <div class="wl-code">603259.SH</div>
+          </div>
+          <div class="wl-side">
+            <span class="wl-badge">自选</span>
+            <div class="wl-px"><span class="px">8.76</span><span class="chg down">−0.8%</span></div>
+          </div>
+        </div>
+        <div class="wl-row">
+          <div class="wl-main">
+            <div class="wl-name">澜舟生物</div>
+            <div class="wl-code">688317.SH</div>
+          </div>
+          <div class="wl-side">
+            <span class="wl-badge">自选</span>
+            <div class="wl-px"><span class="px">33.05</span><span class="chg up">+0.6%</span></div>
+          </div>
+        </div>
+        <div class="wl-note">行情为模拟数据 · 截至 02:31</div>
+      </div>
+
+      <div class="card announce">
+        <div class="ann-kicker">自选股触发 · 今天 01:24 · 已过滤 5 条噪音</div>
+        <h2 class="ann-title">沐辰智控发布重大公告：拟收购海外半导体设备资产</h2>
+        <div class="ann-list">
+          <div class="ann-item"><span class="tag tag-fact">事实</span><span>沐辰智控今日 00:47 发布公告，拟收购新加坡 NovoSem（半导体封装测试设备）100% 股权。<span class="src-inline">公告原文 · 00:47</span></span></div>
+          <div class="ann-item"><span class="tag tag-fact">事实</span><span>交易对价约 2.1 亿美元（约合人民币 15.2 亿元），构成重大资产重组。<span class="src-inline">公告原文 · 00:47</span></span></div>
+          <div class="ann-item"><span class="tag tag-fact">事实</span><span>交易尚需董事会、股东大会及境内外监管审批，存在终止风险。<span class="src-inline">交易所披露 · 01:02</span></span></div>
+          <div class="ann-item"><span class="tag tag-fact">事实</span><span>沐辰智控是你的自选股与持仓标的。<span class="src-inline">自选股列表 · 本地</span></span></div>
+        </div>
+        <div class="ann-note">重大公告触达 · 只推事实：不夹带解读与情绪，解读在提问后生成。</div>
+        <div class="metric-note">打开率口径：触达后 7 日内点开解读的比例。</div>
+        <div class="ann-actions">
+          <button class="btn ghost" id="btn-original">查看公告原文（模拟）</button>
+          <button class="btn primary" id="btn-to-chat">问一问助手 →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════════════ P1 · 提问与澄清（HITL#1） ═════════════ -->
+<section class="view" id="p1">
+  <div class="wrap">
+    <div class="chat-grid">
+      <div class="chat-panel" id="chat1">
+        <div class="bubble user rv" id="bubble1">这对我持仓意味着什么？</div>
+        <div class="intent-box rv" id="il1"><span class="ib-step">①</span><div><b>意图理解</b>　识别为「沐辰智控收购公告对持仓的影响」提问</div></div>
+        <div class="intent-box rv" id="il2"><span class="ib-step">②</span><div><b>上下文检查</b>　持仓成本 / 占总资产比 / 期限：未提供</div></div>
+        <div class="intent-box rv" id="il3"><span class="ib-step">③</span><div><b>需要澄清</b>　AI 不得替你假设持仓，请补充后继续</div></div>
+        <div class="card clar-card rv" id="clar-card">
+          <div class="card-head"><span class="card-title">先对齐你的持仓</span><span class="hitl-tag">HITL · 澄清</span></div>
+          <p class="card-sub">占比决定影响权重、期限决定你承受的是波动还是审批结果、成本决定价格相对你的盈亏位置——三个字段会改变结论方向，缺失时停下来问，而不是替你假设。（上下文充分时跳过此步）</p>
+          <div class="field-row">
+            <div class="field"><label>持仓成本（元）</label><input id="f-cost" type="number" min="0" step="0.01" placeholder="如 18.40"></div>
+            <div class="field"><label>占总资产比（%）</label><input id="f-ratio" type="number" min="0" step="1" placeholder="如 12"></div>
+            <div class="field"><label>计划持有期限</label><select id="f-horizon"><option value="">请选择</option><option value="<6m">&lt; 6 个月</option><option value="6-12m">6–12 个月</option><option value="1-3y">1–3 年</option><option value=">3y">3 年以上</option></select></div>
+          </div>
+          <button class="sample-link" id="sample-fill">填入示例持仓（成本 ¥18.40 · 占比 18% · 期限 1–3 年）</button>
+          <div class="form-err" id="clar-err">持仓信息不完整——AI 不得替你假设，请补全后再继续。</div>
+          <div class="card-actions"><button class="btn primary" id="btn-clar-submit">提交，开始解读</button></div>
+        </div>
+        <div class="chat-input-row">
+          <input id="q-input" placeholder="换个问法试试…">
+          <button class="btn ghost" id="btn-send">发送</button>
+        </div>
+      </div>
+      <aside class="rail">
+        <div class="card rail-card">
+          <div class="rail-title">对话上下文</div>
+          <div class="ctx-row"><span>标的</span><b>沐辰智控 688521.SH</b></div>
+          <div class="ctx-row"><span>事件</span><b>重大资产重组公告</b></div>
+          <div class="ctx-row"><span>成本</span><b id="ctx-cost">—</b></div>
+          <div class="ctx-row"><span>占总资产</span><b id="ctx-ratio">—</b></div>
+          <div class="ctx-row"><span>期限</span><b id="ctx-horizon">—</b></div>
+          <div class="ctx-row"><span>状态</span><span class="chip chip-dim" id="ctx-state">持仓信息待补充</span></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="p2">
+  <div class="wrap">
+    <div class="chat-grid">
+      <div class="chat-panel" id="chat2">
+        <div class="bubble user">这对我持仓意味着什么？</div>
+        <div class="chip-sum">✓ 已补充持仓：成本 ¥18.40 · 占总资产 18% · 期限 1–3 年</div>
+        <div class="card proc-card">
+          <div class="proc-head">
+            <span class="ac-title">检索 · 过滤 · 事实提取</span>
+            <div class="proc-head-right">
+              <span class="ps-flow">流程定位 ④⑤⑥</span>
+              <button class="btn ghost small" id="replay-process">重播</button>
+            </div>
+          </div>
+
+          <div class="proc-stage">
+            <div class="ps-head"><span class="ps-dot">4</span><span class="ps-title">多源召回</span><span class="ps-status" id="st4-status">检索中…</span></div>
+            <div class="ps-body" id="st4-body">
+              <div class="src-row" style="--i:0"><span class="src-name">公司公告原文</span><span class="src-meta">巨潮资讯 · 00:47</span><span class="chip chip-ok">已召回</span></div>
+              <div class="src-row" style="--i:1"><span class="src-name">交易所披露</span><span class="src-meta">上交所 · 01:02</span><span class="chip chip-ok">已召回</span></div>
+              <div class="src-row" style="--i:2"><span class="src-name">行情快照</span><span class="src-meta">模拟行情接口 · 02:31</span><span class="chip chip-ok">已召回</span></div>
+              <div class="src-row" style="--i:3"><span class="src-name">财经媒体报道</span><span class="src-meta">2 篇 · 其中 1 篇通稿</span><span class="chip chip-dim">部分召回</span></div>
+              <div class="src-row" style="--i:4"><span class="src-name">股吧 / 社区讨论</span><span class="src-meta">18 条 · 16 条待过滤</span><span class="chip chip-dim">部分召回</span></div>
+              <div class="src-row" style="--i:5"><span class="src-name">券商研报接口</span><span class="src-meta">东证研究 · 请求超时</span><span class="chip chip-warn">超时 · 已降级</span></div>
+            </div>
+          </div>
+
+          <div class="proc-stage">
+            <div class="ps-head"><span class="ps-dot">5</span><span class="ps-title">噪音过滤</span><span class="ps-status" id="st5-status">待开始</span></div>
+            <div class="ps-body" id="st5-body">
+              <div class="std-note">判定标准：相关性 · 信源 · 时效</div>
+              <div class="noise-item" style="--i:0">
+                <span class="tag tag-noise">已过滤</span><span class="std-chip">信源</span>
+                <div class="noise-txt"><s>「完了完了，主力出货，割肉跑！」</s><span class="noise-src">股吧热帖 · 02:18</span></div>
+                <div class="noise-reason">过滤理由：情绪化表述，无新增事实；社交平台默认判噪音，无可交叉验证的信源</div>
+              </div>
+              <div class="noise-item" style="--i:1">
+                <span class="tag tag-noise">已过滤</span><span class="std-chip">信源</span>
+                <div class="noise-txt"><s>「重磅利好！这家公司要起飞了」</s><span class="noise-src">财经号通稿 · 01:40</span></div>
+                <div class="noise-reason">过滤理由：标题党；低可信渠道改写公告原文，无独立信源与信息增量</div>
+              </div>
+              <div class="noise-item" style="--i:2">
+                <span class="tag tag-noise">已过滤</span><span class="std-chip">信源</span>
+                <div class="noise-txt"><s>「内部人士：收购早有预谋，下月就停牌」</s><span class="noise-src">自媒体文章 · 01:55</span></div>
+                <div class="noise-reason">过滤理由：匿名信源不可查证；时间断言无依据</div>
+              </div>
+              <div class="noise-item" style="--i:3">
+                <span class="tag tag-noise">已过滤</span><span class="std-chip">时效</span>
+                <div class="noise-txt"><s>「三个月前传闻：沐辰智控拟发行可转债」</s><span class="noise-src">财经社区转载 · 三个月前</span></div>
+                <div class="noise-reason">过滤理由：引用过期信息，已被后续事实（本次公告）推翻</div>
+              </div>
+              <div class="noise-item" style="--i:4">
+                <span class="tag tag-noise">已过滤</span><span class="std-chip">相关性</span>
+                <div class="noise-txt"><s>「半导体设备板块今日全线大涨」</s><span class="noise-src">板块资讯 · 02:05</span></div>
+                <div class="noise-reason">过滤理由：行业整体情绪与个股基本面弱关联，对本次解读无信息增量</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="proc-stage">
+            <div class="ps-head"><span class="ps-dot">6</span><span class="ps-title">事实提取</span><span class="ps-status" id="st6-status">待开始</span></div>
+            <div class="ps-body" id="st6-body">
+              <div class="fact-item" style="--i:0">
+                <span class="fact-num">01</span>
+                <div class="fact-main"><span class="tag tag-fact">事实</span>沐辰智控于 00:47 发布重大资产重组公告，拟收购新加坡 NovoSem 100% 股权。<div class="fact-src">出处：公告原文 · 00:47</div></div>
+              </div>
+              <div class="fact-item" style="--i:1">
+                <span class="fact-num">02</span>
+                <div class="fact-main"><span class="tag tag-fact">事实</span>交易对价约 2.1 亿美元（约合人民币 15.2 亿元），以现金及发行股份方式支付。<div class="fact-src">出处：公告原文 · 00:47</div></div>
+              </div>
+              <div class="fact-item" style="--i:2">
+                <span class="fact-num">03</span>
+                <div class="fact-main"><span class="tag tag-fact">事实</span>交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批。<div class="fact-src">出处：交易所披露 · 01:02</div></div>
+              </div>
+              <div class="fact-item" style="--i:3">
+                <span class="fact-num">04</span>
+                <div class="fact-main"><span class="tag tag-fact">事实</span>公告后首个交易日集合竞价上涨 4.2%。<div class="fact-src">出处：行情快照（模拟） · 02:31</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="degrade-note rv p2-late">⚠ 降级说明：研报数据缺失（接口超时）。本次解读仅基于已召回事实，不含研报观点；信息不足之处将明示。</div>
+          <div class="card-actions rv p2-late"><button class="btn primary" id="btn-to-p3">查看分析结论 →</button></div>
+        </div>
+      </div>
+      <aside class="rail">
+        <div class="card rail-card">
+          <div class="rail-title">工作进度</div>
+          <div class="rail-row"><span class="rr-dot" id="pr4"></span>④ 多源召回<span class="rr-state" id="pr4t">进行中</span></div>
+          <div class="rail-row"><span class="rr-dot" id="pr5"></span>⑤ 噪音过滤<span class="rr-state" id="pr5t">等待</span></div>
+          <div class="rail-row"><span class="rr-dot" id="pr6"></span>⑥ 事实分离<span class="rr-state" id="pr6t">等待</span></div>
+          <div class="rail-row"><span class="rr-dot warn"></span>研报接口超时 · 降级<span class="rr-state">已明示</span></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+<section class="view" id="p3">
+  <div class="wrap">
+    <div class="chat-grid">
+      <div class="chat-panel" id="chat3">
+        <div class="chip-sum">✓ 检索完成：5 类来源已召回 · 过滤 5 条噪音 · 提取 4 条事实 · 研报数据降级</div>
+        <div class="card analyze-card">
+          <div class="proc-head">
+            <span class="ac-title">分析生成</span>
+            <div class="proc-head-right"><span class="ps-flow">流程定位 ⑦</span></div>
+          </div>
+          <div class="an-row" id="an1">
+            <span class="an-spin"></span><span class="an-check">✓</span>
+            <div class="an-main"><div class="an-name">梳理影响面</div><div class="an-desc">公告 → 持仓的传导路径</div></div>
+          </div>
+          <div class="an-row" id="an2">
+            <span class="an-spin"></span><span class="an-check">✓</span>
+            <div class="an-main"><div class="an-name">构建假设</div><div class="an-desc">每条推断附假设与置信度</div></div>
+          </div>
+          <div class="an-row" id="an3">
+            <span class="an-spin"></span><span class="an-check">✓</span>
+            <div class="an-main"><div class="an-name">置信度评估</div><div class="an-desc">禁「必然」表述，标注不确定性</div></div>
+          </div>
+        </div>
+        <div class="card confirm-card rv" id="confirm-card">
+          <span class="cf-tag">HITL · 需要你确认</span>
+          <div class="ac-title" style="margin-bottom:8px">结论呈现前，请确认理解</div>
+          <div class="cf-trigger">触发确认的原因：本次解读推断占比高（3/7），且包含利空性质的不确定性（审批、摊薄）——按规则仅在此时请你确认。</div>
+          <p class="cf-body">我将围绕以下范围生成解读：<b>本次收购公告对沐辰智控持仓的直接影响</b>——发生了什么【事实】、可能的影响【推断·附假设】、尚待确认【未知】。不提供买卖建议。</p>
+          <div class="cf-actions">
+            <button class="btn primary" id="btn-confirm">确认，生成解读</button>
+            <button class="btn ghost" id="btn-object">不认可，重新分析</button>
+            <button class="link-btn" id="btn-skip-confirm">跳过确认（将记录跳过率）</button>
+          </div>
+          <div class="object-panel" id="object-panel">
+            <div class="op-title">哪里需要调整？</div>
+            <label class="obj-chip"><input type="radio" name="obj-fb" value="分析范围不对"><span>分析范围不对</span></label>
+            <label class="obj-chip"><input type="radio" name="obj-fb" value="遗漏了关键信息"><span>遗漏了关键信息</span></label>
+            <label class="obj-chip"><input type="radio" name="obj-fb" value="表述需要调整"><span>表述需要调整</span></label>
+            <div style="margin-top:8px"><button class="btn ghost small" id="btn-reanalyze" disabled>按此反馈重新分析</button></div>
+          </div>
+          <div class="obj-note" id="obj-note"></div>
+        </div>
+      </div>
+      <aside class="rail">
+        <div class="card rail-card">
+          <div class="rail-title">为什么需要你确认</div>
+          <p class="rail-text">仅在推断占比高或涉及利空时请确认——本次解读推断占比 3/7 且含利空不确定性，故触发确认。先对齐「解读什么」，再谈「解读成什么」。</p>
+          <div class="rail-flow">流程位置 ⑧ · 不认可则回到 ⑦ · 跳过率将作为产品信号记录</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+<section class="view" id="p4">
+  <div class="wrap">
+    <div class="chat-grid">
+      <div class="chat-panel" id="chat4">
+        <div class="chip-sum">✓ 解读已生成 · 已按你的确认聚焦公告直接影响</div>
+        <div class="card concl-card">
+          <div class="concl-head">
+            <span class="ac-title">解读结论 · 沐辰智控收购公告</span>
+            <span class="concl-meta">生成 02:33 · 数据截至 02:31 · 全部为模拟数据</span>
+          </div>
+
+          <div class="sec sec-fact rv" id="sec-fact">
+            <div class="sec-head"><span class="tag tag-fact">事实</span>发生了什么<span class="sec-note">已发生 · 有出处 · 可溯源</span></div>
+            <div class="item"><span class="tag tag-fact">事实</span>沐辰智控于 00:47 发布重大资产重组公告，拟收购新加坡 NovoSem 100% 股权。<div class="item-src">出处：公告原文 · 00:47</div></div>
+            <div class="item"><span class="tag tag-fact">事实</span>交易对价约 2.1 亿美元（约合人民币 15.2 亿元），以现金及发行股份方式支付。<div class="item-src">出处：公告原文 · 00:47</div></div>
+            <div class="item"><span class="tag tag-fact">事实</span>交易构成重大资产重组，尚需董事会、股东大会及境内外监管审批。<div class="item-src">出处：交易所披露 · 01:02</div></div>
+            <div class="item"><span class="tag tag-fact">事实</span>公告后首个交易日集合竞价上涨 4.2%。<div class="item-src">出处：行情快照（模拟） · 02:31</div></div>
+          </div>
+
+          <div class="sec sec-personal rv" id="sec-personal">
+            <div class="sec-head">与你何干 · 基于你的持仓<span class="sec-note">由澄清所得信息生成</span></div>
+            <div class="pp-row"><span class="pp-label">占比</span><span class="pp-val" id="pp-ratio">18%</span><span class="pp-verdict" id="pp-ratio-verdict">—</span></div>
+            <div class="pp-row"><span class="pp-label">期限</span><span class="pp-val" id="pp-horizon">1–3 年</span><span class="pp-verdict" id="pp-horizon-verdict">—</span></div>
+            <div class="pp-row"><span class="pp-label">成本</span><span class="pp-val" id="pp-cost">¥18.40</span><span class="pp-verdict" id="pp-cost-verdict">—</span></div>
+          </div>
+
+          <div class="sec sec-infer rv" id="sec-infer">
+            <div class="sec-head"><span class="tag tag-infer">推断</span>可能的影响<span class="sec-note">未发生 · 附假设与置信 · 禁「必然」</span></div>
+            <div class="item">
+              <span class="tag tag-infer">推断</span>若交易获批且整合顺利，公司业务将从消费电子精密制造延伸至半导体封装测试设备，形成第二增长曲线。
+              <div class="assume-row">假设：监管审批通过、整合按期完成</div>
+              <div class="conf-row">置信度：<b>中</b>——主要不确定性在审批周期与整合执行</div>
+            </div>
+            <div class="item">
+              <span class="tag tag-infer">推断</span>交易以现金 + 股份方式支付，短期利息费用与股本摊薄将给利润端带来压力。
+              <div class="assume-row">假设：交易按公告对价完成</div>
+              <div class="conf-row">置信度：<b>中</b></div>
+            </div>
+            <div class="item">
+              <span class="tag tag-infer">推断</span>重组事件本身会放大股价短期波动，波动幅度通常高于平日。
+              <div class="assume-row">假设：无其他重大利好或利空叠加</div>
+              <div class="conf-row">置信度：<b>低–中</b>——事件驱动统计口径（模拟）</div>
+            </div>
+          </div>
+
+          <div class="sec sec-unk rv" id="sec-unk">
+            <div class="sec-head"><span class="tag tag-unk">未知</span>尚待确认<span class="sec-note">信息缺失 · 待披露或需你补充</span></div>
+            <div class="item"><span class="tag tag-unk">未知</span>交易对价的现金 / 股份支付比例尚未披露——<b>需要你补充</b>：若你从其他渠道知悉该比例，可告诉我，我会据此复核推断。</div>
+            <div class="item"><span class="tag tag-unk">未知</span>NovoSem 的营收、利润与负债数据尚未披露——<b>需要你等待</b>：审计报告或问询函回复，暂无时间表。</div>
+          </div>
+
+          <div class="fold rv p4-late">
+            <div class="fold-head" id="fold-head"><span>▸</span>已过滤的噪音（5 条）——不进解读，列摘要供核对</div>
+            <div class="fold-body" id="fold-body">
+              <div class="fold-noise">股吧热帖「完了完了，主力出货，割肉跑！」——信源：社交平台默认判噪音</div>
+              <div class="fold-noise">财经号通稿「重磅利好！这家公司要起飞了」——信源：低可信渠道，无独立信源</div>
+              <div class="fold-noise">自媒体「内部人士：收购早有预谋，下月停牌」——信源：匿名信源不可查证</div>
+              <div class="fold-noise">旧闻「三个月前传闻：拟发行可转债」——时效：已被本次公告推翻</div>
+              <div class="fold-noise">板块资讯「半导体设备板块全线大涨」——相关性：与个股基本面弱关联</div>
+            </div>
+          </div>
+
+          <div class="fold rv p4-late">
+            <div class="fold-head" id="gloss-head"><span>▸</span>术语白话（新手档 · 演示：解释深浅按熟悉度自适应）</div>
+            <div class="fold-body" id="gloss-body">
+              <div class="gloss-row"><span class="gloss-term">重大资产重组</span><span class="gloss-txt">一次规模很大的资产买卖，按规则要走更严格的审批流程，期间可能停牌。</span></div>
+              <div class="gloss-row"><span class="gloss-term">商誉减值</span><span class="gloss-txt">收购价高出净资产的部分叫商誉；被收购公司日后表现不及预期时，这部分会被扣减成损失。</span></div>
+              <div class="gloss-row"><span class="gloss-term">股本摊薄</span><span class="gloss-txt">用发行新股票来支付对价，总股数变多，每股分到的利润变少。</span></div>
+              <div class="gloss-row"><span class="gloss-term">集合竞价</span><span class="gloss-txt">开盘前把买卖报价集中撮合，得出开盘价。</span></div>
+              <div class="gloss-row"><span class="gloss-term">事件驱动</span><span class="gloss-txt">股价波动主要由具体事件（而非业绩变化）引起。</span></div>
+            </div>
+          </div>
+
+          <div class="src-foot rv p4-late">数据来源：公告原文（巨潮资讯）· 交易所披露 · 行情快照（模拟）｜研报数据缺失（接口超时 · 已降级）｜以上均为模拟数据，不构成投资建议。</div>
+          <div class="quick-ask rv p4-late">
+            <button class="btn primary" id="btn-quick-buy">所以现在该买还是该卖？</button>
+            <div class="metric-note">追问率口径：读完解读继续提问的比例。</div>
+          </div>
+        </div>
+      </div>
+      <aside class="rail">
+        <div class="card rail-card">
+          <div class="rail-title">标签图例</div>
+          <div class="legend-row"><span class="tag tag-fact">事实</span><span>已发生 · 有出处 · 可溯源</span></div>
+          <div class="legend-row"><span class="tag tag-infer">推断</span><span>未发生 · 附假设 · 有置信</span></div>
+          <div class="legend-row"><span class="tag tag-unk">未知</span><span>信息缺失 · 待补充</span></div>
+          <div class="legend-row"><span class="tag tag-noise">噪音</span><span>已过滤 · 附过滤理由</span></div>
+          <p class="rail-text" style="margin-top:10px">一眼分清「已发生」与「未发生」——把确定性还给事实与你的判断。</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+<section class="view" id="p5">
+  <div class="wrap">
+    <div class="chat-grid">
+      <div class="chat-panel" id="chat5">
+        <div class="chip-sum">✓ 解读已生成（事实 4 · 推断 3 · 未知 2）· 全部为模拟数据</div>
+        <div class="bubble user rv" id="bubble5">所以现在该买还是该卖？</div>
+        <div class="card refusal">
+          <span class="ref-kicker rv" id="ref-kicker">关于买卖建议 · 合规边界</span>
+          <div class="ref-statement rv" id="ref-statement">我不能给出买入或卖出的建议。</div>
+          <div class="reason-list rv" id="ref-reasons">
+            <div class="reason-item"><b>合规红线</b>买卖指令属于投资顾问业务，需持牌经营——给出指令即越界。</div>
+            <div class="reason-item"><b>产品定位</b>这里只做噪音过滤与可解释解读，帮你「看清发生了什么」，不替你「决定怎么办」。</div>
+            <div class="reason-item"><b>决策责任</b>成本、仓位、期限只有你知道，决策的后果也由你承担——决定必须由你作出。</div>
+          </div>
+          <div class="risk-block rv" id="ref-risk">
+            <div class="rb-head">与此决定相关的客观风险信息<span class="rb-sub">只陈述事实与机制，不表态方向</span></div>
+            <div class="risk-grid">
+              <div class="risk-card"><div class="risk-name">审批不确定性</div><div class="risk-txt">尚需董事会、股东大会及境内外监管审批，公告未明确时间表；任一环节未通过，交易即终止。</div></div>
+              <div class="risk-card"><div class="risk-name">商誉减值风险</div><div class="risk-txt">若现金收购形成商誉，未来整合不及预期需计提减值，将直接减少当期利润。</div></div>
+              <div class="risk-card"><div class="risk-name">跨境整合风险</div><div class="risk-txt">涉及新加坡团队、供应链与客户协同；历史跨境并购整合失败率较高（模拟口径）。</div></div>
+              <div class="risk-card"><div class="risk-name">汇率与融资成本</div><div class="risk-txt">对价以美元计价，人民币汇率波动影响实际支付成本；并购融资将增加财务费用。</div></div>
+            </div>
+          </div>
+          <div class="checklist rv" id="ref-checklist">
+            <div class="cl-head">
+              <span class="ac-title">把决定交还给你 · 自检清单</span>
+              <div class="cl-prog">
+                <div class="prog-track"><div class="prog-bar" id="cl-prog-bar"></div></div>
+                <span class="prog-text" id="cl-prog-text">清单完成率 0/6</span>
+              </div>
+            </div>
+            <p class="cl-sub">分别写下买入、卖出、持有的理由。完成这份清单后，决定由你作出。</p>
+            <div class="cl-cols">
+              <div class="cl-col">
+                <div class="cl-col-head">买入的理由</div>
+                <div class="cl-list">
+                  <label class="cl-item"><input type="checkbox" class="cl-cb"><div class="cl-item-txt">我看好收购整合后的第二增长曲线，且接受其不确定性<span class="cl-eg">示例</span></div></label>
+                  <label class="cl-item"><input type="checkbox" class="cl-cb"><div class="cl-item-txt">当前价格相对我的估值仍有安全边际<span class="cl-eg">示例</span></div></label>
+                </div>
+                <div class="cl-add-row"><input class="cl-add-input" placeholder="添加你的理由…"><button class="btn ghost small cl-add-btn">添加</button></div>
+              </div>
+              <div class="cl-col">
+                <div class="cl-col-head">卖出的理由</div>
+                <div class="cl-list">
+                  <label class="cl-item"><input type="checkbox" class="cl-cb"><div class="cl-item-txt">我不愿承担审批期的不确定性与停牌风险<span class="cl-eg">示例</span></div></label>
+                  <label class="cl-item"><input type="checkbox" class="cl-cb"><div class="cl-item-txt">该持仓占比已超出我的舒适区间<span class="cl-eg">示例</span></div></label>
+                </div>
+                <div class="cl-add-row"><input class="cl-add-input" placeholder="添加你的理由…"><button class="btn ghost small cl-add-btn">添加</button></div>
+              </div>
+              <div class="cl-col">
+                <div class="cl-col-head">持有的理由</div>
+                <div class="cl-list">
+                  <label class="cl-item"><input type="checkbox" class="cl-cb"><div class="cl-item-txt">信息尚不完整，我选择等待后续公告再判断<span class="cl-eg">示例</span></div></label>
+                  <label class="cl-item"><input type="checkbox" class="cl-cb"><div class="cl-item-txt">我认可长期逻辑，短期波动不影响我的计划<span class="cl-eg">示例</span></div></label>
+                </div>
+                <div class="cl-add-row"><input class="cl-add-input" placeholder="添加你的理由…"><button class="btn ghost small cl-add-btn">添加</button></div>
+              </div>
+            </div>
+          </div>
+          <div class="final-card" id="final-card">✓ 清单完成 · <b>决定由你作出。</b>清单已保存（演示数据），可随时回看。需要我把任何一条理由展开成客观信息，随时提问。</div>
+        </div>
+        <div class="bubble user rv" id="bubble-esc1">我还是想知道该怎么操作</div>
+        <div class="resp-card rv" id="resp-esc1">我理解你想要一个方向。买入、卖出、持有各有利弊，且都取决于只有你知道的约束——成本、仓位、期限、可承受的波动。我仍然不能替你决定。回到清单：你能勾出的理由在哪一栏，那一栏就是你的倾向。需要我把任何一条理由展开成客观信息，我随时可以。</div>
+        <div class="bubble user rv" id="bubble-esc2">我就是想听你的</div>
+        <div class="resp-card closed rv" id="resp-esc2"><span class="ref-kicker">本话题到此为止</span><br>按照产品规则，我不会继续回答买卖方向的问题。风险信息与自检清单都在上面，决定由你作出。</div>
+        <div class="card esc-zone" id="esc-zone">
+          <div class="esc-title">还想继续追问？<span class="sec-note">升级路径演示：坚持追问 → 再次引导 → 停止作答</span></div>
+          <div>
+            <button class="btn ghost small" id="btn-escalate1">我还是想知道该怎么操作</button>
+            <button class="btn ghost small" id="btn-escalate2" style="display:none">我就是想听你的</button>
+          </div>
+        </div>
+      </div>
+      <aside class="rail">
+        <div class="card rail-card">
+          <div class="rail-title">为什么不能给你指令</div>
+          <div class="rail-row"><span class="rr-dot warn"></span>持牌红线：买卖指令属投顾业务</div>
+          <div class="rail-row"><span class="rr-dot warn"></span>产品定位：只解读，不决定</div>
+          <div class="rail-row"><span class="rr-dot warn"></span>决策责任：在你手上</div>
+        </div>
+        <div class="card rail-card">
+          <div class="rail-title">清单完成率（MVP 指标）</div>
+          <div class="mini-stat"><b id="cl-mini">0/6</b><span class="mini-note">口径：收到清单后完成勾选</span></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  本原型为产品评审演示用途：全部行情、公告、新闻、研报数据均为<b>模拟数据</b>，不构成任何投资建议。标签体系【事实】【推断】【未知】【噪音】均为演示示例。
+</footer>
+
+<div class="toast" id="toast">
+  <div class="toast-head">沐辰智控 · 重大公告<span class="tag tag-fact">事实摘要</span></div>
+  <div class="toast-body">拟收购新加坡半导体设备资产，构成重大重组。</div>
+  <div class="toast-foot">已过滤 5 条噪音 · <span class="mock-mini">模拟数据</span></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-card">
+    <div class="modal-head"><span class="card-title">公告原文（节选 · 模拟）</span><button class="modal-close" id="modal-close">×</button></div>
+    <div class="modal-body">
+      <p>沐辰智控股份有限公司（以下简称「公司」）于 2026 年 9 月 9 日召开董事会，审议通过《关于收购 NovoSem Pte. Ltd. 100% 股权的议案》。公司拟以现金及发行股份相结合的方式收购标的公司全部股权，交易对价约为 2.1 亿美元（约合人民币 15.2 亿元，以交割日汇率为准）。</p>
+      <p>本次交易构成重大资产重组，尚需提交股东大会审议，并履行境内外相关监管审批程序。交易能否最终实施存在不确定性，敬请投资者注意投资风险。</p>
+      <p class="modal-mock">以上公告内容为演示用模拟数据。</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var STEPS=[
+    {id:'p0',num:'01',label:'触达',flow:'触发器 · 流程图起点（U 之前）'},
+    {id:'p1',num:'02',label:'澄清',flow:'①②③ 意图理解 · 需澄清（HITL）'},
+    {id:'p2',num:'03',label:'检索·过滤',flow:'④⑤⑥ 召回 · 过滤 · 事实（含降级 D）'},
+    {id:'p3',num:'04',label:'确认理解',flow:'⑦⑧ 分析生成 · 结论前确认（HITL）'},
+    {id:'p4',num:'05',label:'结论解读',flow:'⑨ 带标签结论输出'},
+    {id:'p5',num:'06',label:'追问应答',flow:'⑩ 拒答 · 自检清单 · 结束（HITL）'}
+  ];
+  function $(s){return document.querySelector(s)}
+  function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s))}
+  function esc(s){return s.replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
+  var tv={};
+  function vt(k,fn,ms){tv[k]=tv[k]||[];tv[k].push(setTimeout(fn,ms))}
+  function clearV(k){(tv[k]||[]).forEach(clearTimeout);tv[k]=[]}
+  function go(h){location.hash=h}
+  function setTxt(id,t){var e=document.getElementById(id);if(e)e.textContent=t}
+  function scrollChat(id){var el=document.getElementById(id);if(el)el.scrollTop=el.scrollHeight}
+
+  /* ---------- 路由 ---------- */
+  function render(){
+    var h=(location.hash||'#p0').replace('#','');
+    var ok=STEPS.some(function(s){return s.id===h});
+    if(!ok)h='p0';
+    $$('.view').forEach(function(v){v.classList.toggle('active',v.id===h)});
+    var idx=0;STEPS.forEach(function(s,i){if(s.id===h)idx=i});
+    $$('.step').forEach(function(st){
+      var i=-1;STEPS.forEach(function(s,k){if(s.id===st.getAttribute('data-step'))i=k});
+      st.classList.toggle('active',i===idx);
+      st.classList.toggle('visited',i>=0&&i<idx);
+      st.classList.toggle('future',i>idx);
+    });
+    setTxt('flow-badge','流程定位：'+STEPS[idx].flow);
+    window.scrollTo(0,0);
+    clearV(h);
+    ({p0:enterP0,p1:enterP1,p2:enterP2,p3:enterP3,p4:enterP4,p5:enterP5})[h]();
+  }
+
+  /* ---------- 推送 ---------- */
+  function showToast(h,b,f){
+    var t=document.getElementById('toast');if(!t)return;
+    var th=t.querySelector('.toast-head');
+    if(th)th.innerHTML=h||'沐辰智控 · 重大公告 <span class="tag tag-fact">事实摘要</span>';
+    var tb=t.querySelector('.toast-body');if(tb)tb.textContent=b||'拟收购新加坡半导体设备资产，构成重大重组。';
+    var tf=t.querySelector('.toast-foot');if(tf)tf.innerHTML=f||'已过滤 5 条噪音 · <span class="mock-mini">模拟数据</span>';
+    t.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t=setTimeout(function(){t.classList.remove('show')},5200);
+  }
+  function enterP0(){vt('p0',showToast,600)}
+
+  /* ---------- P1 ---------- */
+  function hideErr(){var e=document.getElementById('clar-err');if(e)e.classList.remove('show')}
+  function updateCtx(){
+    var cost=document.getElementById('f-cost');
+    if(!cost)return;
+    setTxt('ctx-cost',cost.value?'¥'+cost.value:'—');
+    setTxt('ctx-ratio',document.getElementById('f-ratio').value?document.getElementById('f-ratio').value+'%':'—');
+    var hzt={'<6m':'< 6 个月','6-12m':'6–12 个月','1-3y':'1–3 年','>3y':'3 年以上'};
+    setTxt('ctx-horizon',hzt[document.getElementById('f-horizon').value]||'—');
+    var full=cost.value&&document.getElementById('f-ratio').value&&document.getElementById('f-horizon').value;
+    var st=document.getElementById('ctx-state');
+    if(st){st.textContent=full?'持仓信息已提供':'持仓信息待补充';st.classList.toggle('chip-ok',full);st.classList.toggle('chip-dim',!full)}
+  }
+  function runP1(){
+    clearV('p1');
+    ['il1','il2','il3'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('show')});
+    var c=document.getElementById('clar-card');if(c)c.classList.remove('show');
+    hideErr();
+    vt('p1',function(){var b=document.getElementById('bubble1');if(b)b.classList.add('show');scrollChat('chat1')},250);
+    vt('p1',function(){$('#il1').classList.add('show');scrollChat('chat1')},1000);
+    vt('p1',function(){$('#il2').classList.add('show');scrollChat('chat1')},1900);
+    vt('p1',function(){$('#il3').classList.add('show');scrollChat('chat1')},2800);
+    vt('p1',function(){
+      document.getElementById('clar-card').classList.add('show');
+      scrollChat('chat1');
+      var f=document.getElementById('f-cost');if(f)f.focus({preventScroll:true});
+    },3700);
+  }
+  function enterP1(){updateCtx();runP1()}
+  function sendQ(){
+    var inp=document.getElementById('q-input');
+    var v=inp.value.trim();if(!v){inp.focus();return}
+    document.getElementById('bubble1').textContent=v;
+    runP1();
+  }
+  function submitClar(){
+    var cost=document.getElementById('f-cost').value,
+        ratio=document.getElementById('f-ratio').value,
+        hz=document.getElementById('f-horizon').value;
+    if(!cost||!ratio||!hz){
+      var e=document.getElementById('clar-err');if(e)e.classList.add('show');
+      return;
+    }
+    go('#p2');
+  }
+  function sampleFill(){
+    document.getElementById('f-cost').value='18.40';
+    document.getElementById('f-ratio').value='18';
+    document.getElementById('f-horizon').value='1-3y';
+    hideErr();updateCtx();
+  }
+
+  /* ---------- P2 ---------- */
+  function rr(id,txt){var d=document.getElementById(id);if(d)d.classList.add('done');setTxt(id+'t',txt)}
+  function runP2(){
+    if(!document.getElementById('st4-body'))return;
+    clearV('p2');
+    $$('#p2 .ps-body').forEach(function(b){b.classList.remove('show')});
+    ['st4-status','st5-status','st6-status'].forEach(function(id,i){
+      var e=document.getElementById(id);
+      if(e){e.textContent=i===0?'检索中…':'待开始';e.classList.remove('done')}
+    });
+    $$('#p2 .rail .rr-dot').forEach(function(d){d.classList.remove('done')});
+    ['pr4t','pr5t','pr6t'].forEach(function(id,i){setTxt(id,i===0?'进行中':'等待')});
+    $$('#p2 .p2-late').forEach(function(e){e.classList.remove('show')});
+    vt('p2',function(){setTxt('st4-status','已召回 5 类来源 · 1 类降级');document.getElementById('st4-status').classList.add('done');$('#st4-body').classList.add('show');rr('pr4','完成');scrollChat('chat2')},600);
+    vt('p2',function(){setTxt('st5-status','已过滤 5 条');document.getElementById('st5-status').classList.add('done');$('#st5-body').classList.add('show');rr('pr5','完成');scrollChat('chat2')},2500);
+    vt('p2',function(){setTxt('st6-status','已提取 4 条事实');document.getElementById('st6-status').classList.add('done');$('#st6-body').classList.add('show');rr('pr6','完成');scrollChat('chat2')},4400);
+    vt('p2',function(){$$('#p2 .p2-late').forEach(function(e){e.classList.add('show')});scrollChat('chat2')},5600);
+  }
+  function enterP2(){runP2()}
+
+  /* ---------- P3 ---------- */
+  function runP3(){
+    if(!document.getElementById('an1'))return;
+    clearV('p3');
+    $$('#p3 .an-row').forEach(function(r){r.classList.remove('done')});
+    var c=document.getElementById('confirm-card');if(c)c.classList.remove('show');
+    var p=document.getElementById('object-panel');if(p)p.classList.remove('open');
+    var n=document.getElementById('obj-note');if(n)n.classList.remove('show');
+    var b=document.getElementById('btn-reanalyze');if(b)b.disabled=true;
+    vt('p3',function(){document.getElementById('an1').classList.add('done');scrollChat('chat3')},900);
+    vt('p3',function(){document.getElementById('an2').classList.add('done');scrollChat('chat3')},2000);
+    vt('p3',function(){document.getElementById('an3').classList.add('done');scrollChat('chat3')},3100);
+    vt('p3',function(){document.getElementById('confirm-card').classList.add('show');scrollChat('chat3')},4000);
+  }
+  function enterP3(){runP3()}
+  function reanalyze(){
+    var sel=document.querySelector('#p3 input[name="obj-fb"]:checked');
+    if(!sel)return;
+    var p=document.getElementById('object-panel');if(p)p.classList.remove('open');
+    var n=document.getElementById('obj-note');
+    if(n){n.textContent='已根据你的反馈调整分析（'+sel.value+'）。';n.classList.add('show')}
+    runP3();
+  }
+
+  /* ---------- P4 ---------- */
+  function enterP4(){
+    if(!document.getElementById('sec-fact'))return;
+    updatePersonal();
+    ['sec-fact','sec-personal','sec-infer','sec-unk'].forEach(function(id,i){
+      vt('p4',function(){var e=document.getElementById(id);if(e)e.classList.add('show');scrollChat('chat4')},300+i*450);
+    });
+    vt('p4',function(){$$('#p4 .p4-late').forEach(function(e){e.classList.add('show')});scrollChat('chat4')},2350);
+  }
+  function updatePersonal(){
+    if(!document.getElementById('f-cost'))return;
+    var cost=parseFloat(document.getElementById('f-cost').value);if(!(cost>0))cost=18.40;
+    var ratio=parseFloat(document.getElementById('f-ratio').value);if(!(ratio>0))ratio=18;
+    var hz=document.getElementById('f-horizon').value||'1-3y';
+    setTxt('pp-ratio',ratio+'%');
+    setTxt('pp-ratio-verdict',ratio>=15?'高于多数持有人（中位数约 5–8%，模拟口径）——重组不确定性对你组合的影响权重偏高':'与多数持有人相当或偏低（中位数约 5–8%，模拟口径）——重组不确定性对你组合的影响权重有限');
+    var hzt={'<6m':'< 6 个月','6-12m':'6–12 个月','1-3y':'1–3 年','>3y':'3 年以上'};
+    setTxt('pp-horizon',hzt[hz]||'1–3 年');
+    var isShort=(hz==='<6m'||hz==='6-12m');
+    setTxt('pp-horizon-verdict',isShort?'短于重组审批与整合周期——波动对你的影响权重高于审批结果本身':'覆盖审批与整合期——短期波动对你的影响权重应低于审批结果本身');
+    setTxt('pp-cost','¥'+cost.toFixed(2));
+    var pct=(19.12-cost)/cost*100;
+    setTxt('pp-cost-verdict','当前价 19.12 元（模拟行情 · 02:31），相对成本 '+(pct>=0?'+':'')+pct.toFixed(1)+'%——客观并置，不构成方向判断');
+  }
+
+  /* ---------- P5 ---------- */
+  function updateCl(){
+    var cbs=$$('#p5 .cl-cb');if(!cbs.length)return;
+    var total=cbs.length,done=cbs.filter(function(c){return c.checked}).length;
+    var pct=total?Math.round(done/total*100):0;
+    var bar=document.getElementById('cl-prog-bar');if(bar)bar.style.width=pct+'%';
+    setTxt('cl-prog-text','清单完成率 '+done+'/'+total);
+    setTxt('cl-mini',done+'/'+total);
+    var fin=document.getElementById('final-card');
+    if(fin)fin.classList.toggle('show',total>0&&done===total);
+  }
+  function enterP5(){
+    if(!document.getElementById('ref-kicker'))return;
+    updateCl();
+    vt('p5',function(){document.getElementById('bubble5').classList.add('show');scrollChat('chat5')},300);
+    ['ref-kicker','ref-statement','ref-reasons','ref-risk','ref-checklist'].forEach(function(id,i){
+      vt('p5',function(){var e=document.getElementById(id);if(e)e.classList.add('show');scrollChat('chat5')},900+i*500);
+    });
+  }
+  function addClItem(btn){
+    var col=btn.closest('.cl-col');
+    var inp=col.querySelector('.cl-add-input');
+    var v=inp.value.trim();if(!v)return;
+    var lab=document.createElement('label');
+    lab.className='cl-item custom';
+    lab.innerHTML='<input type="checkbox" class="cl-cb"><div class="cl-item-txt">'+esc(v)+'</div>';
+    col.querySelector('.cl-list').appendChild(lab);
+    inp.value='';
+    updateCl();
+    scrollChat('chat5');
+  }
+  function escalate1(){
+    var b=document.getElementById('bubble-esc1');if(!b)return;
+    b.classList.add('show');
+    document.getElementById('resp-esc1').classList.add('show');
+    document.getElementById('btn-escalate1').style.display='none';
+    document.getElementById('btn-escalate2').style.display='inline-flex';
+    scrollChat('chat5');
+  }
+  function escalate2(){
+    document.getElementById('bubble-esc2').classList.add('show');
+    document.getElementById('resp-esc2').classList.add('show');
+    document.getElementById('esc-zone').style.display='none';
+    scrollChat('chat5');
+  }
+
+  /* ---------- 重置 / 弹窗 ---------- */
+  function resetAll(){
+    var f=document.getElementById('f-cost');
+    if(f){f.value='';document.getElementById('f-ratio').value='';document.getElementById('f-horizon').value=''}
+    updateCtx();hideErr();
+    $$('#p5 .custom').forEach(function(e){e.remove()});
+    $$('#p5 .cl-cb').forEach(function(c){c.checked=false});
+    ['bubble-esc1','resp-esc1','bubble-esc2','resp-esc2'].forEach(function(id){var e=document.getElementById(id);if(e)e.classList.remove('show')});
+    var z=document.getElementById('esc-zone');if(z)z.style.display='';
+    var b1=document.getElementById('btn-escalate1');if(b1)b1.style.display='inline-flex';
+    var b2=document.getElementById('btn-escalate2');if(b2)b2.style.display='none';
+    updateCl();
+    go('#p0');
+  }
+  function openModal(){document.getElementById('modal').classList.add('open')}
+  function closeModal(){document.getElementById('modal').classList.remove('open')}
+
+  /* ---------- 事件 ---------- */
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    if(t.closest('#btn-to-chat'))go('#p1');
+    else if(t.closest('#btn-original'))openModal();
+    else if(t.closest('#modal-close')||t.id==='modal')closeModal();
+    else if(t.closest('#sample-fill'))sampleFill();
+    else if(t.closest('#btn-send'))sendQ();
+    else if(t.closest('#btn-clar-submit'))submitClar();
+    else if(t.closest('#btn-to-p3'))go('#p3');
+    else if(t.closest('#replay-process'))runP2();
+    else if(t.closest('#btn-confirm'))go('#p4');
+    else if(t.closest('#btn-object')){document.getElementById('object-panel').classList.add('open')}
+    else if(t.closest('#btn-reanalyze'))reanalyze();
+    else if(t.closest('#fold-head')){
+      document.getElementById('fold-body').classList.toggle('open');
+      document.getElementById('fold-head').classList.toggle('open');
+    }
+    else if(t.closest('#btn-quick-buy'))go('#p5');
+    else if(t.closest('#btn-skip-confirm')){showToast('跳过确认 · 已记录','跳过率将作为产品信号记录。','<span class="mock-mini">模拟数据</span>');go('#p4')}
+    else if(t.closest('#gloss-head')){
+      document.getElementById('gloss-body').classList.toggle('open');
+      document.getElementById('gloss-head').classList.toggle('open');
+    }
+    else if(t.closest('#btn-escalate1'))escalate1();
+    else if(t.closest('#btn-escalate2'))escalate2();
+    else if(t.closest('.cl-add-btn'))addClItem(t.closest('.cl-add-btn'));
+    else if(t.closest('#btn-reset'))resetAll();
+    else if(t.closest('.step'))go(t.closest('.step').getAttribute('data-step'));
+  });
+  document.addEventListener('change',function(e){
+    var t=e.target;
+    if(t.classList&&t.classList.contains('cl-cb'))updateCl();
+    if(t.name==='obj-fb'){var b=document.getElementById('btn-reanalyze');if(b)b.disabled=false}
+    if(t.id==='f-cost'||t.id==='f-ratio'||t.id==='f-horizon'){updateCtx();hideErr()}
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&e.target.id==='q-input'){sendQ();e.preventDefault()}
+    if(e.key==='Enter'&&e.target.classList&&e.target.classList.contains('cl-add-input')){addClItem(e.target.closest('.cl-add-row').querySelector('.cl-add-btn'))}
+    if(e.key==='Escape')closeModal();
+  });
+  window.addEventListener('hashchange',render);
+  if(!location.hash)go('#p0');else render();
+})();
+</script>
+</body>
+</html>

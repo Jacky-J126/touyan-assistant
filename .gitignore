@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# 环境与密钥
+.env
+
+# 运行时数据（埋点事件等，不入库）
+data/
+
+# 工具缓存
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# 构建产物
+dist/
+build/
+
+# 系统与编辑器
+.DS_Store
+.claude/
