@@ -48,6 +48,8 @@ def test_tushare_missing_token_degrades(monkeypatch):
     from app.datasources import TushareProvider
 
     monkeypatch.delenv("TUSHARE_TOKEN", raising=False)
+    # 包已安装但无 token：走「未配置 token」降级分支（CI 不装 [real]，测试与环境无关）
+    monkeypatch.setitem(sys.modules, "tushare", ModuleType("tushare"))
     result = TushareProvider().recall("688521.SH")
     assert result.items == []
     assert result.degrade_note and "TUSHARE_TOKEN" in result.degrade_note
