@@ -15,6 +15,9 @@ dev = ["pytest>=8", "ruff>=0.5"]
 api = ["uvicorn[standard]>=0.30"]
 real = ["akshare>=1.14", "tushare>=1.4"]
 
+[tool.setuptools.packages.find]
+include = ["app*", "evals*"]  # prompts/ 与 datasets/ 为数据目录，不是包
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
